@@ -1,27 +1,19 @@
 [
   {
     "id": "s1",
-    "name": "premium",
-    "extension": ".com",
+    "name": "Acm",
+    "extension": ".ee",
     "status": "sold",
-    "soldTo": "科技解决方案公司",
-    "soldDate": "2025-02-15"
+    "soldTo": "微信好友",
+    "soldDate": "2024-07-15"
   },
   {
     "id": "s2",
-    "name": "digital",
-    "extension": ".io",
+    "name": "Zai",
+    "extension": ".Li",
     "status": "sold",
-    "soldTo": "创意代理公司",
-    "soldDate": "2025-01-20"
-  },
-  {
-    "id": "s3",
-    "name": "ecommerce",
-    "extension": ".store",
-    "status": "sold",
-    "soldTo": "在线零售有限公司",
-    "soldDate": "2024-12-10"
+    "soldTo": "微信好友",
+    "soldDate": "2024-12-26"
   }
 ]
 
