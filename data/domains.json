@@ -5,8 +5,10 @@
     "extension": ".Me",
     "status": "available",
     "registrar": "阿里云",
+    "registrarIcon": "aliyun",
     "registrationTime": "2025-08-31",
-    "expirationTime": "2025-05-15"
+    "expirationTime": "2025-05-15",
+    "purchaseUrl": "https://wanwang.aliyun.com/domain/searchresult?keyword=example.com"
   },
   {
     "id": "2",
@@ -14,8 +16,10 @@
     "extension": ".Top",
     "status": "available",
     "registrar": "腾讯云",
+    "registrarIcon": "tencent",
     "registrationTime": "2026-10-21",
-    "expirationTime": "2024-11-20"
+    "expirationTime": "2024-11-20",
+    "purchaseUrl": "https://dnspod.cloud.tencent.com/domain/buy?domain=mywebsite.org"
   },
   {
     "id": "3",
@@ -23,8 +27,10 @@
     "extension": ".Gs",
     "status": "available",
     "registrar": "西部数码",
-    "registrationTime": "2025-05-12",
-    "expirationTime": "2026-01-10"
+    "registrarIcon": "west",
+    "registrationTime": "2026-10-21",
+    "expirationTime": "2026-01-10",
+    "purchaseUrl": "https://www.godaddy.com/domainsearch/find?domainToCheck=coolproject.io"
   }
 ]
 

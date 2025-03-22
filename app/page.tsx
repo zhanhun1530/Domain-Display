@@ -1,7 +1,6 @@
-"use client"
+import MultiDomainDisplay from "@/multi-domain-display"
 
-import MultiDomainDisplay from "../multi-domain-display"
-
-export default function SyntheticV0PageForDeployment() {
+export default function Home() {
   return <MultiDomainDisplay />
 }
+

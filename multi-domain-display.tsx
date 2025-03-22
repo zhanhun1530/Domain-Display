@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Globe, ShoppingCart, CheckCircle2, ExternalLink, Calendar } from "lucide-react"
+import { ShoppingCart, CheckCircle2, ExternalLink, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { RegistrarIcon } from "@/components/registrar-icon"
 
 // 导入JSON数据
 import domainsData from "@/data/domains.json"
@@ -17,8 +18,10 @@ interface Domain {
   extension: string
   status: "active" | "available" | "sold"
   registrar?: string
+  registrarIcon?: string
   registrationTime?: string
   expirationTime?: string
+  purchaseUrl?: string
   soldTo?: string
   soldDate?: string
 }
@@ -62,7 +65,7 @@ export default function MultiDomainDisplay() {
             <CardContent className="p-0">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-muted-foreground mr-2" />
+                  <RegistrarIcon iconName={domain.registrarIcon} className="h-5 w-5 text-muted-foreground mr-2" />
                   <span className="text-sm font-medium">{domain.registrar || "未知商家"}</span>
                 </div>
                 {domain.registrationTime && (
@@ -84,7 +87,15 @@ export default function MultiDomainDisplay() {
                     ></div>
                     <span className="text-sm text-muted-foreground">待出售</span>
                   </div>
-                  {domain.status === "available" && (
+                  {domain.status === "available" && domain.purchaseUrl && (
+                    <Button size="sm" className="h-8" asChild>
+                      <a href={domain.purchaseUrl} target="_blank" rel="noopener noreferrer">
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        购买
+                      </a>
+                    </Button>
+                  )}
+                  {domain.status === "available" && !domain.purchaseUrl && (
                     <Button size="sm" className="h-8">
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       购买
