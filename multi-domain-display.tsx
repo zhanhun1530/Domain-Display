@@ -1,16 +1,10 @@
 "use client"
-
-import { useState, useEffect } from "react"
 import { ShoppingCart, CheckCircle2, ExternalLink, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { RegistrarIcon } from "@/components/registrar-icon"
-
-// 导入JSON数据
-import domainsData from "@/data/domains.json"
-import soldDomainsData from "@/data/sold-domains.json"
-import friendlyLinksData from "@/data/friendly-links.json"
+import { useDomains } from "@/contexts/domain-context"
 
 interface Domain {
   id: string
@@ -34,16 +28,8 @@ interface FriendlyLink {
 }
 
 export default function MultiDomainDisplay() {
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [soldDomains, setSoldDomains] = useState<Domain[]>([])
-  const [friendlyLinks, setFriendlyLinks] = useState<FriendlyLink[]>([])
-
-  // 加载数据
-  useEffect(() => {
-    setDomains(domainsData)
-    setSoldDomains(soldDomainsData)
-    setFriendlyLinks(friendlyLinksData)
-  }, [])
+  // 使用域名上下文而不是直接导入JSON
+  const { domains, soldDomains, friendlyLinks } = useDomains()
 
   // Function to format date in a more readable format
   const formatDate = (dateString: string) => {
