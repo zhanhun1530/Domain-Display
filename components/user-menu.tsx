@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { LogOut, Settings, User, Database } from "lucide-react"
+import { LogOut, Settings, User, Database, Cog } from "lucide-react"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
@@ -43,21 +43,27 @@ export function UserMenu() {
         <DropdownMenuLabel>我的账户</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="flex items-center cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>控制面板</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard?tab=profile" className="flex items-center cursor-pointer">
+          <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>个人资料</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard?tab=backup" className="flex items-center cursor-pointer">
+          <Link href="/dashboard/domains" className="flex items-center cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>域名管理</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/backup" className="flex items-center cursor-pointer">
             <Database className="mr-2 h-4 w-4" />
             <span>备份管理</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
+            <Cog className="mr-2 h-4 w-4" />
+            <span>网站设置</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

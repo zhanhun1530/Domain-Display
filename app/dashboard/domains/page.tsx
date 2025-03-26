@@ -3,8 +3,10 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
+import DomainManager from "@/components/domain-manager"
+import DashboardLayout from "@/components/dashboard-layout"
 
-export default function DashboardPage() {
+export default function DomainsPage() {
   const { user } = useAuth()
   const router = useRouter()
 
@@ -12,13 +14,18 @@ export default function DashboardPage() {
     // 如果用户未登录，重定向到登录页面
     if (!user?.isLoggedIn) {
       router.push("/login")
-    } else {
-      // 如果用户已登录，重定向到用户资料页面
-      router.push("/dashboard/profile")
     }
   }, [user, router])
 
-  // 返回空内容，因为这个页面会立即重定向
-  return null
+  // 如果用户未登录，不渲染内容
+  if (!user?.isLoggedIn) {
+    return null
+  }
+
+  return (
+    <DashboardLayout activeTab="domains">
+      <DomainManager />
+    </DashboardLayout>
+  )
 }
 
