@@ -38,9 +38,9 @@ interface DomainContextType {
 
 // 创建上下文，提供默认值避免null检查
 const DomainContext = createContext<DomainContextType>({
-  domains: defaultDomainsData,
-  soldDomains: defaultSoldDomainsData,
-  friendlyLinks: defaultFriendlyLinksData,
+  domains: defaultDomainsData as Domain[],
+  soldDomains: defaultSoldDomainsData as Domain[],
+  friendlyLinks: defaultFriendlyLinksData as FriendlyLink[],
   updateDomains: () => {},
   updateSoldDomains: () => {},
   updateFriendlyLinks: () => {},
@@ -85,15 +85,15 @@ function saveToStorage<T>(key: string, data: T): void {
 
 export function DomainProvider({ children }: { children: ReactNode }) {
   // 使用默认值初始化，避免null值
-  const [domains, setDomains] = useState<Domain[]>(defaultDomainsData)
-  const [soldDomains, setSoldDomains] = useState<Domain[]>(defaultSoldDomainsData)
-  const [friendlyLinks, setFriendlyLinks] = useState<FriendlyLink[]>(defaultFriendlyLinksData)
+  const [domains, setDomains] = useState<Domain[]>(defaultDomainsData as Domain[])
+  const [soldDomains, setSoldDomains] = useState<Domain[]>(defaultSoldDomainsData as Domain[])
+  const [friendlyLinks, setFriendlyLinks] = useState<FriendlyLink[]>(defaultFriendlyLinksData as FriendlyLink[])
 
   // 从localStorage加载域名数据
   useEffect(() => {
-    setDomains(getFromStorage(DOMAINS_STORAGE_KEY, defaultDomainsData))
-    setSoldDomains(getFromStorage(SOLD_DOMAINS_STORAGE_KEY, defaultSoldDomainsData))
-    setFriendlyLinks(getFromStorage(FRIENDLY_LINKS_STORAGE_KEY, defaultFriendlyLinksData))
+    setDomains(getFromStorage(DOMAINS_STORAGE_KEY, defaultDomainsData as Domain[]))
+    setSoldDomains(getFromStorage(SOLD_DOMAINS_STORAGE_KEY, defaultSoldDomainsData as Domain[]))
+    setFriendlyLinks(getFromStorage(FRIENDLY_LINKS_STORAGE_KEY, defaultFriendlyLinksData as FriendlyLink[]))
   }, [])
 
   // 保存域名数据到localStorage
@@ -122,9 +122,9 @@ export function DomainProvider({ children }: { children: ReactNode }) {
   }
 
   const resetToDefaults = () => {
-    setDomains(defaultDomainsData)
-    setSoldDomains(defaultSoldDomainsData)
-    setFriendlyLinks(defaultFriendlyLinksData)
+    setDomains(defaultDomainsData as Domain[])
+    setSoldDomains(defaultSoldDomainsData as Domain[])
+    setFriendlyLinks(defaultFriendlyLinksData as FriendlyLink[])
   }
 
   const contextValue = {

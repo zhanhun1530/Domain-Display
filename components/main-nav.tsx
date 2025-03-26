@@ -4,19 +4,25 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { useSite } from "@/contexts/site-context"
 import { Button } from "@/components/ui/button"
-import { UserMenu } from "@/components/user-menu"
-import { Shield } from "lucide-react"
+import { Shield, LogOut } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export function MainNav() {
-  const { isLoggedIn } = useAuth()
+  const { user, logout } = useAuth()
   const { settings } = useSite()
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   // 确保只在客户端渲染后使用设置
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleLogout = () => {
+    logout()
+    router.push("/login")
+  }
 
   // 如果未挂载，显示默认值
   if (!mounted) {
@@ -56,14 +62,33 @@ export function MainNav() {
           )}
         </Link>
         <div className="ml-auto flex items-center space-x-4">
-          {isLoggedIn ? (
-            <UserMenu />
+          {user?.isAdmin ? (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Shield className="h-4 w-4" />
+                <span>控制台</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout} 
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>退出登录</span>
+              </Button>
+            </>
           ) : (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/login">
-                <Shield className="h-4 w-4 mr-2" />
-                管理员登录
-              </Link>
+            <Button 
+              variant="outline" 
+              onClick={() => router.push("/login")}
+              className="flex items-center gap-2 hover:bg-gray-50 transition-colors duration-200"
+            >
+              <Shield className="h-4 w-4" />
+              <span>管理员登录</span>
             </Button>
           )}
         </div>

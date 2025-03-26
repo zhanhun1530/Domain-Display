@@ -13,18 +13,18 @@ import { ArrowRight, Globe, Database, Cog } from "lucide-react"
 import Link from "next/link"
 
 export default function DashboardPage() {
-  const { isLoggedIn } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     // 如果用户未登录，重定向到登录页面
-    if (!isLoggedIn) {
+    if (!user?.isAdmin) {
       router.push("/login")
     }
-  }, [isLoggedIn, router])
+  }, [user, router])
 
   // 如果用户未登录，不渲染内容
-  if (!isLoggedIn) {
+  if (!user?.isAdmin) {
     return null
   }
 

@@ -9,16 +9,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 
 export default function SettingsPage() {
-  const { isLoggedIn } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // 如果用户未登录，重定向到登录页面
-    if (!isLoggedIn) {
+    if (!user?.isAdmin) {
       router.push("/login")
-      return
     }
 
     // 设置一个短暂的延迟，确保组件能够正确加载
@@ -27,7 +26,7 @@ export default function SettingsPage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [isLoggedIn, router])
+  }, [user, router])
 
   // 错误处理函数
   const handleError = (err: Error) => {
@@ -37,7 +36,7 @@ export default function SettingsPage() {
   }
 
   // 如果用户未登录，不渲染内容
-  if (!isLoggedIn) {
+  if (!user?.isAdmin) {
     return null
   }
 
@@ -73,8 +72,8 @@ export default function SettingsPage() {
   // 正常渲染设置页面
   return (
     <DashboardLayout activeTab="settings">
-      <h1 className="text-3xl font-bold mb-6">网站设置</h1>
-      <div className="settings-container">
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">网站设置</h1>
         <SiteSettings />
       </div>
     </DashboardLayout>

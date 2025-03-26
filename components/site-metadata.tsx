@@ -17,42 +17,38 @@ export function SiteMetadata() {
 
       // 更新网站图标
       if (settings.favicon) {
-        const updateFavicon = () => {
-          // 查找现有的favicon链接
-          let existingFavicon = document.querySelector('link[rel="icon"]')
-          let existingAppleIcon = document.querySelector('link[rel="apple-touch-icon"]')
+        const existingFavicon = document.querySelector('link[rel="icon"]')
 
-          if (existingFavicon) {
-            // 如果存在，更新href
-            existingFavicon.setAttribute("href", settings.favicon)
-          } else {
-            // 如果不存在，创建新的
-            existingFavicon = document.createElement("link")
-            existingFavicon.rel = "icon"
-            existingFavicon.href = settings.favicon
-            document.head.appendChild(existingFavicon)
-          }
-
-          if (existingAppleIcon) {
-            // 如果存在，更新href
-            existingAppleIcon.setAttribute("href", settings.favicon)
-          } else {
-            // 如果不存在，创建新的
-            existingAppleIcon = document.createElement("link")
-            existingAppleIcon.rel = "apple-touch-icon"
-            existingAppleIcon.href = settings.favicon
-            document.head.appendChild(existingAppleIcon)
-          }
-
-          console.log("已更新网站图标:", settings.favicon)
+        if (existingFavicon) {
+          // 如果存在，更新 href
+          (existingFavicon as HTMLLinkElement).href = settings.favicon
+        } else {
+          // 如果不存在，创建新的
+          const newFavicon = document.createElement("link")
+          newFavicon.setAttribute("rel", "icon")
+          newFavicon.setAttribute("href", settings.favicon)
+          document.head.appendChild(newFavicon)
         }
 
-        updateFavicon()
+        // 更新apple-touch-icon
+        const existingAppleIcon = document.querySelector('link[rel="apple-touch-icon"]')
+        if (existingAppleIcon) {
+          // 如果存在，更新href
+          existingAppleIcon.setAttribute("href", settings.favicon)
+        } else {
+          // 如果不存在，创建新的
+          const newAppleIcon = document.createElement("link")
+          newAppleIcon.setAttribute("rel", "apple-touch-icon")
+          newAppleIcon.setAttribute("href", settings.favicon)
+          document.head.appendChild(newAppleIcon)
+        }
+
+        console.log("已更新网站图标:", settings.favicon)
       }
     } catch (error) {
       console.error("更新网站元数据失败:", error)
     }
-  }, [settings.siteName, settings.favicon])
+  }, [settings])
 
   // 这个组件不渲染任何内容
   return null

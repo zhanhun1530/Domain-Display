@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 interface AuthContextType {
   isLoggedIn: boolean
   password: string
+  user: { isAdmin: boolean } | null
   login: (password: string) => boolean
   logout: () => void
   updatePassword: (newPassword: string) => void
@@ -19,6 +20,7 @@ const DEFAULT_PASSWORD = "admin123"
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   password: DEFAULT_PASSWORD,
+  user: null,
   login: () => false,
   logout: () => {},
   updatePassword: () => {},
@@ -29,9 +31,9 @@ const AuthContext = createContext<AuthContextType>({
 const AUTH_STORAGE_KEY = "domain-display-auth"
 
 // 从本地存储获取认证信息
-function getAuthFromStorage(): { isLoggedIn: boolean; password: string } {
+function getAuthFromStorage(): { isLoggedIn: boolean; password: string; user: { isAdmin: boolean } | null } {
   if (typeof window === "undefined") {
-    return { isLoggedIn: false, password: DEFAULT_PASSWORD }
+    return { isLoggedIn: false, password: DEFAULT_PASSWORD, user: null }
   }
 
   try {
@@ -44,11 +46,11 @@ function getAuthFromStorage(): { isLoggedIn: boolean; password: string } {
   }
 
   // 如果没有存储的认证信息或解析错误，返回默认值
-  return { isLoggedIn: false, password: DEFAULT_PASSWORD }
+  return { isLoggedIn: false, password: DEFAULT_PASSWORD, user: null }
 }
 
 // 保存认证信息到本地存储
-function saveAuthToStorage(auth: { isLoggedIn: boolean; password: string }): void {
+function saveAuthToStorage(auth: { isLoggedIn: boolean; password: string; user: { isAdmin: boolean } | null }): void {
   if (typeof window === "undefined") {
     return
   }
@@ -63,9 +65,10 @@ function saveAuthToStorage(auth: { isLoggedIn: boolean; password: string }): voi
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
   // 初始化状态
-  const [auth, setAuth] = useState<{ isLoggedIn: boolean; password: string }>({
+  const [auth, setAuth] = useState<{ isLoggedIn: boolean; password: string; user: { isAdmin: boolean } | null }>({
     isLoggedIn: false,
     password: DEFAULT_PASSWORD,
+    user: null,
   })
 
   // 初始化：从本地存储加载认证信息
@@ -79,7 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentAuth = getAuthFromStorage()
 
     if (password === currentAuth.password) {
-      const updatedAuth = { ...currentAuth, isLoggedIn: true }
+      const updatedAuth = { 
+        ...currentAuth, 
+        isLoggedIn: true,
+        user: { isAdmin: true }
+      }
       setAuth(updatedAuth)
       saveAuthToStorage(updatedAuth)
       return true
@@ -89,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 登出函数
   const logout = (): void => {
-    const updatedAuth = { ...auth, isLoggedIn: false }
+    const updatedAuth = { ...auth, isLoggedIn: false, user: null }
     setAuth(updatedAuth)
     saveAuthToStorage(updatedAuth)
   }
@@ -113,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue = {
     isLoggedIn: auth.isLoggedIn,
     password: auth.password,
+    user: auth.user,
     login,
     logout,
     updatePassword,
