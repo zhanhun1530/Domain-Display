@@ -13,10 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { LogOut, Settings, User, Database, Cog } from "lucide-react"
+import { LogOut, LayoutDashboard } from "lucide-react"
 
 export function UserMenu() {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -25,45 +25,23 @@ export function UserMenu() {
     setOpen(false)
   }
 
-  // 确保用户名始终有值
-  const username = user?.username || "用户"
-  const firstLetter = username.charAt(0).toUpperCase() || "U"
-
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/10 text-primary">{firstLetter}</AvatarFallback>
+            <AvatarFallback className="bg-primary/10 text-primary">A</AvatarFallback>
           </Avatar>
-          <span className="hidden md:inline-block text-sm font-medium">{username}</span>
+          <span className="hidden md:inline-block text-sm font-medium">管理员</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>我的账户</DropdownMenuLabel>
+        <DropdownMenuLabel>管理控制台</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>个人资料</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/domains" className="flex items-center cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>域名管理</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/backup" className="flex items-center cursor-pointer">
-            <Database className="mr-2 h-4 w-4" />
-            <span>备份管理</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
-            <Cog className="mr-2 h-4 w-4" />
-            <span>网站设置</span>
+          <Link href="/dashboard" className="flex items-center cursor-pointer">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>控制台管理</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

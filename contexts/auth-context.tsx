@@ -2,95 +2,86 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 
-// 定义用户类型
-interface User {
-  username: string
-  password: string
-  isLoggedIn: boolean
-}
-
 // 定义认证上下文类型
 interface AuthContextType {
-  user: User
-  login: (username: string, password: string) => boolean
+  isLoggedIn: boolean
+  password: string
+  login: (password: string) => boolean
   logout: () => void
-  updateUsername: (newUsername: string) => void
   updatePassword: (newPassword: string) => void
-  resetCredentials: (currentPassword: string, newUsername: string, newPassword: string) => boolean
+  resetPassword: () => void
 }
 
-// 默认用户
-const DEFAULT_USER: User = {
-  username: "admin",
-  password: "password",
-  isLoggedIn: false,
-}
+// 默认密码
+const DEFAULT_PASSWORD = "admin123"
 
 // 创建上下文，提供默认值避免null检查
 const AuthContext = createContext<AuthContextType>({
-  user: DEFAULT_USER,
+  isLoggedIn: false,
+  password: DEFAULT_PASSWORD,
   login: () => false,
   logout: () => {},
-  updateUsername: () => {},
   updatePassword: () => {},
-  resetCredentials: () => false,
+  resetPassword: () => {},
 })
 
 // 本地存储键
-const USER_STORAGE_KEY = "domain-display-user"
+const AUTH_STORAGE_KEY = "domain-display-auth"
 
-// 从本地存储获取用户
-function getUserFromStorage(): User {
+// 从本地存储获取认证信息
+function getAuthFromStorage(): { isLoggedIn: boolean; password: string } {
   if (typeof window === "undefined") {
-    return DEFAULT_USER
+    return { isLoggedIn: false, password: DEFAULT_PASSWORD }
   }
 
   try {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY)
-    if (storedUser) {
-      return JSON.parse(storedUser)
+    const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY)
+    if (storedAuth) {
+      return JSON.parse(storedAuth)
     }
   } catch (error) {
-    console.error("Error reading user from localStorage:", error)
+    console.error("Error reading auth from localStorage:", error)
   }
 
-  // 如果没有存储的用户或解析错误，返回默认用户
-  return DEFAULT_USER
+  // 如果没有存储的认证信息或解析错误，返回默认值
+  return { isLoggedIn: false, password: DEFAULT_PASSWORD }
 }
 
-// 保存用户到本地存储
-function saveUserToStorage(user: User): void {
+// 保存认证信息到本地存储
+function saveAuthToStorage(auth: { isLoggedIn: boolean; password: string }): void {
   if (typeof window === "undefined") {
     return
   }
 
   try {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth))
   } catch (error) {
-    console.error("Error saving user to localStorage:", error)
+    console.error("Error saving auth to localStorage:", error)
   }
 }
 
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // 始终使用默认用户初始化，避免null值
-  const [user, setUser] = useState<User>(DEFAULT_USER)
+  // 初始化状态
+  const [auth, setAuth] = useState<{ isLoggedIn: boolean; password: string }>({
+    isLoggedIn: false,
+    password: DEFAULT_PASSWORD,
+  })
 
-  // 初始化：从本地存储加载用户
+  // 初始化：从本地存储加载认证信息
   useEffect(() => {
-    const storedUser = getUserFromStorage()
-    setUser(storedUser)
+    const storedAuth = getAuthFromStorage()
+    setAuth(storedAuth)
   }, [])
 
   // 登录函数
-  const login = (username: string, password: string): boolean => {
-    // 直接从存储获取最新用户数据
-    const currentUser = getUserFromStorage()
+  const login = (password: string): boolean => {
+    const currentAuth = getAuthFromStorage()
 
-    if (username === currentUser.username && password === currentUser.password) {
-      const loggedInUser = { ...currentUser, isLoggedIn: true }
-      setUser(loggedInUser)
-      saveUserToStorage(loggedInUser)
+    if (password === currentAuth.password) {
+      const updatedAuth = { ...currentAuth, isLoggedIn: true }
+      setAuth(updatedAuth)
+      saveAuthToStorage(updatedAuth)
       return true
     }
     return false
@@ -98,61 +89,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 登出函数
   const logout = (): void => {
-    const loggedOutUser = { ...user, isLoggedIn: false }
-    setUser(loggedOutUser)
-    saveUserToStorage(loggedOutUser)
-  }
-
-  // 更新用户名
-  const updateUsername = (newUsername: string): void => {
-    if (!newUsername.trim()) return
-
-    const updatedUser = { ...getUserFromStorage(), username: newUsername }
-    setUser(updatedUser)
-    saveUserToStorage(updatedUser)
+    const updatedAuth = { ...auth, isLoggedIn: false }
+    setAuth(updatedAuth)
+    saveAuthToStorage(updatedAuth)
   }
 
   // 更新密码
   const updatePassword = (newPassword: string): void => {
     if (!newPassword.trim()) return
 
-    const updatedUser = { ...getUserFromStorage(), password: newPassword }
-    setUser(updatedUser)
-    saveUserToStorage(updatedUser)
+    const updatedAuth = { ...auth, password: newPassword }
+    setAuth(updatedAuth)
+    saveAuthToStorage(updatedAuth)
   }
 
-  // 重置凭据（需要当前密码）
-  const resetCredentials = (currentPassword: string, newUsername: string, newPassword: string): boolean => {
-    const currentUser = getUserFromStorage()
-
-    // 验证当前密码
-    if (currentPassword !== currentUser.password) {
-      return false
-    }
-
-    // 更新用户名和密码
-    if (newUsername.trim() && newPassword.trim()) {
-      const updatedUser = {
-        ...currentUser,
-        username: newUsername,
-        password: newPassword,
-        isLoggedIn: false, // 重置后需要重新登录
-      }
-      setUser(updatedUser)
-      saveUserToStorage(updatedUser)
-      return true
-    }
-
-    return false
+  // 重置密码
+  const resetPassword = (): void => {
+    const updatedAuth = { ...auth, password: DEFAULT_PASSWORD }
+    setAuth(updatedAuth)
+    saveAuthToStorage(updatedAuth)
   }
 
   const contextValue = {
-    user,
+    isLoggedIn: auth.isLoggedIn,
+    password: auth.password,
     login,
     logout,
-    updateUsername,
     updatePassword,
-    resetCredentials,
+    resetPassword,
   }
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
