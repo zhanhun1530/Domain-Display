@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
   const [redirecting, setRedirecting] = useState(false)
-  const { isLoggedIn, login } = useAuth()
+  const { isLoggedIn, login, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function LoginPage() {
     }
   }, [isLoggedIn, router])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoginError("")
 
@@ -37,20 +37,28 @@ export default function LoginPage() {
       return
     }
 
-    const success = login(password)
-    if (success) {
-      setRedirecting(true)
-      router.push("/dashboard")
-    } else {
-      setLoginError("登录失败：密码错误")
+    try {
+      const success = await login(password)
+      
+      if (success) {
+        setRedirecting(true)
+        router.push("/dashboard")
+      } else {
+        setLoginError("登录失败：密码错误")
+      }
+    } catch (error) {
+      console.error("登录过程中发生错误:", error)
+      setLoginError("登录失败：系统错误，请稍后再试")
     }
   }
 
-  // 如果正在重定向，显示加载状态
-  if (redirecting) {
+  // 如果正在重定向或加载中，显示加载状态
+  if (redirecting || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <p className="text-muted-foreground">正在重定向...</p>
+        <p className="text-muted-foreground">
+          {isLoading ? "正在验证..." : "正在重定向..."}
+        </p>
       </div>
     )
   }

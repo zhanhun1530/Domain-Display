@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/auth-context"
 import { DataBackup } from "@/components/data-backup"
 import { BackupList } from "@/components/backup-list"
 import { StaticBackup } from "@/components/static-backup"
+import DatabaseBackup from "@/components/database-backup"
+import DatabaseBackupList from "@/components/database-backup-list"
 import DashboardLayout from "@/components/dashboard-layout"
 
 export default function BackupPage() {
@@ -35,6 +37,14 @@ export default function BackupPage() {
           
           <div className="mb-6">
             <DataBackup />
+          </div>
+          
+          <div className="mb-6">
+            <DatabaseBackup />
+          </div>
+          
+          <div className="mb-6">
+            <DatabaseBackupList />
           </div>
           
           <div className="mb-6">

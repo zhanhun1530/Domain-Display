@@ -87,27 +87,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       setIsLoading(true)
       try {
-        // 检查localStorage中的登录状态
-        const storedAuthStr = localStorage.getItem(AUTH_STORAGE_KEY)
-        let isLoggedIn = false
-        
-        if (storedAuthStr) {
-          try {
-            const storedAuth = JSON.parse(storedAuthStr)
-            isLoggedIn = storedAuth.isLoggedIn || false
-          } catch (e) {
-            console.error("解析存储的认证数据失败:", e)
-          }
-        }
+        // 从本地存储获取认证信息
+        const storedAuth = getAuthFromStorage()
         
         // 从服务器加载密码
         const serverPassword = await loadPasswordFromServer()
         
-        // 更新认证状态
+        // 更新认证状态，保持登录状态但更新密码
         setAuth({
-          isLoggedIn,
+          isLoggedIn: storedAuth.isLoggedIn,
           password: serverPassword
         })
+        
+        // 如果密码有变更，更新本地存储但保留登录状态
+        if (storedAuth.password !== serverPassword && storedAuth.isLoggedIn) {
+          console.log("检测到密码已更新，正在同步登录状态...")
+          saveAuthToStorage({
+            isLoggedIn: storedAuth.isLoggedIn,
+            password: serverPassword
+          })
+        }
       } catch (error) {
         console.error("初始化认证失败:", error)
       } finally {
@@ -127,13 +126,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (isValid) {
         // 登录成功
-        setAuth({ isLoggedIn: true, password })
+        const updatedAuth = { isLoggedIn: true, password }
+        setAuth(updatedAuth)
+        // 保存到本地存储
+        saveAuthToStorage(updatedAuth)
         setIsLoading(false)
         return true
       } else {
         // 密码错误
         console.error("密码错误")
-        setAuth({ ...auth, isLoggedIn: false })
+        const updatedAuth = { ...auth, isLoggedIn: false }
+        setAuth(updatedAuth)
+        // 保存到本地存储
+        saveAuthToStorage(updatedAuth)
         setIsLoading(false)
         return false
       }
@@ -160,8 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const success = await updateServerPassword(newPassword)
       
       if (success) {
-        // 更新本地认证状态
-        setAuth({ isLoggedIn: true, password: newPassword })
+        // 更新本地认证状态，保持登录状态
+        const updatedAuth = { isLoggedIn: true, password: newPassword }
+        setAuth(updatedAuth)
+        // 保存到本地存储
+        saveAuthToStorage(updatedAuth)
         setIsLoading(false)
         return true
       } else {
@@ -184,8 +192,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const success = await updateServerPassword(DEFAULT_PASSWORD)
       
       if (success) {
-        // 更新本地认证状态
-        setAuth({ isLoggedIn: auth.isLoggedIn, password: DEFAULT_PASSWORD })
+        // 更新本地认证状态，保持当前登录状态
+        const updatedAuth = { isLoggedIn: auth.isLoggedIn, password: DEFAULT_PASSWORD }
+        setAuth(updatedAuth)
+        // 保存到本地存储
+        saveAuthToStorage(updatedAuth)
         setIsLoading(false)
         return true
       } else {

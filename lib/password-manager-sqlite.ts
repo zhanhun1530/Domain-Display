@@ -1,40 +1,29 @@
 /**
- * 密码管理工具 - 实现密码的永久持久化存储
+ * 密码管理工具 - 使用SQLite实现密码的永久持久化存储
  */
 
-import { saveData, fetchData } from "@/lib/data-service"
+import { getPassword, savePassword } from "@/lib/sqlite-service"
 
-// 密码存储文件名
-const PASSWORD_FILE = "auth-credentials.json"
-// localStorage密钥
+// localStorage密钥，用于本地状态同步
 const AUTH_STORAGE_KEY = "domain-display-auth"
 // 默认管理员密码
 const DEFAULT_PASSWORD = "admin123"
 
 /**
- * 密码数据接口
- */
-interface PasswordData {
-  password: string
-  lastUpdated: number
-  version: string
-}
-
-/**
- * 从服务器加载密码
+ * 从服务器(SQLite数据库)加载密码
  */
 export async function loadPasswordFromServer(): Promise<string> {
   try {
-    console.log("从服务器加载密码...")
-    const data = await fetchData<PasswordData | null>(PASSWORD_FILE, null)
+    console.log("从SQLite数据库加载密码...")
+    const data = getPassword()
     
     if (data && data.password) {
-      console.log("✅ 成功从服务器加载密码")
+      console.log("✅ 成功从SQLite数据库加载密码")
       // 同步到localStorage以供本地使用
       syncPasswordToLocal(data.password)
       return data.password
     } else {
-      console.log("⚠️ 服务器无密码数据，使用本地密码")
+      console.log("⚠️ 数据库无密码数据，使用本地密码")
       // 尝试从localStorage获取密码
       const localPassword = getPasswordFromLocal()
       // 如果本地有密码，保存到服务器
@@ -44,39 +33,39 @@ export async function loadPasswordFromServer(): Promise<string> {
       return localPassword
     }
   } catch (error) {
-    console.error("❌ 从服务器加载密码失败:", error)
+    console.error("❌ 从SQLite数据库加载密码失败:", error)
     return getPasswordFromLocal()
   }
 }
 
 /**
- * 将密码保存到服务器
+ * 将密码保存到服务器(SQLite数据库)
  */
 export async function savePasswordToServer(password: string): Promise<boolean> {
   try {
-    console.log("保存密码到服务器...")
+    console.log("保存密码到SQLite数据库...")
     
     // 创建密码数据对象
-    const passwordData: PasswordData = {
+    const passwordData = {
       password,
       lastUpdated: Date.now(),
       version: "1.0"
     }
     
-    // 保存到服务器
-    const success = await saveData(PASSWORD_FILE, passwordData)
+    // 保存到SQLite数据库
+    const success = savePassword(passwordData)
     
     if (success) {
-      console.log("✅ 密码已成功保存到服务器")
+      console.log("✅ 密码已成功保存到SQLite数据库")
       // 同步到localStorage
       syncPasswordToLocal(password)
     } else {
-      console.error("❌ 保存密码到服务器失败")
+      console.error("❌ 保存密码到SQLite数据库失败")
     }
     
     return success
   } catch (error) {
-    console.error("❌ 保存密码到服务器时发生错误:", error)
+    console.error("❌ 保存密码到SQLite数据库时发生错误:", error)
     return false
   }
 }
@@ -140,7 +129,7 @@ export function syncPasswordToLocal(password: string): void {
  * 验证密码
  */
 export async function verifyPassword(inputPassword: string): Promise<boolean> {
-  // 首先从服务器获取密码
+  // 首先从SQLite数据库获取密码
   const serverPassword = await loadPasswordFromServer()
   
   // 如果服务器获取失败，使用本地密码
@@ -153,7 +142,7 @@ export async function verifyPassword(inputPassword: string): Promise<boolean> {
  * 更新密码
  */
 export async function updatePassword(newPassword: string): Promise<boolean> {
-  // 保存到服务器
+  // 保存到SQLite数据库
   const success = await savePasswordToServer(newPassword)
   
   if (!success) {

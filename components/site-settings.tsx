@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, Check, Loader2, RotateCcw, Save } from "lucide-react"
+import { AlertCircle, Check, Loader2, RotateCcw, Save, Database } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card } from "@/components/ui/card"
+import DatabaseManager from "@/components/database-manager"
 
 // 默认设置，用于初始化和重置
 const DEFAULT_SITE_SETTINGS = {
@@ -295,9 +296,10 @@ export default function SiteSettings() {
       )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="基本设置">基本设置</TabsTrigger>
           <TabsTrigger value="网站图标">网站图标</TabsTrigger>
+          <TabsTrigger value="数据存储">数据存储</TabsTrigger>
         </TabsList>
         
         <TabsContent value="基本设置" className="mt-4">
@@ -480,6 +482,15 @@ export default function SiteSettings() {
               </Button>
             </div>
           </form>
+        </TabsContent>
+
+        <TabsContent value="数据存储" className="mt-4">
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              <p>您可以将所有数据（包括密码、域名、设置等）保存到SQLite数据库中，确保数据安全存储。</p>
+            </div>
+            <DatabaseManager />
+          </div>
         </TabsContent>
       </Tabs>
       
