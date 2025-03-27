@@ -8,47 +8,61 @@ export function SiteMetadata() {
 
   // 在客户端渲染后设置元数据
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
     try {
       // 更新页面标题
       if (settings.siteName) {
-        document.title = settings.siteName
-        console.log("已更新页面标题:", settings.siteName)
+        document.title = settings.siteName;
+        console.log("🔄 已更新页面标题:", settings.siteName);
+        
+        // 更新或创建meta标签
+        let metaTitle = document.querySelector('meta[name="title"]');
+        if (metaTitle) {
+          metaTitle.setAttribute('content', settings.siteName);
+        } else {
+          metaTitle = document.createElement('meta');
+          metaTitle.setAttribute('name', 'title');
+          metaTitle.setAttribute('content', settings.siteName);
+          document.head.appendChild(metaTitle);
+        }
       }
 
       // 更新网站图标
       if (settings.favicon) {
-        const existingFavicon = document.querySelector('link[rel="icon"]')
+        // 更新图标函数
+        const updateFavicon = () => {
+          // 处理标准图标
+          let favicon = document.querySelector('link[rel="icon"]');
+          if (favicon) {
+            favicon.setAttribute('href', settings.favicon);
+          } else {
+            favicon = document.createElement('link');
+            favicon.setAttribute('rel', 'icon');
+            favicon.setAttribute('href', settings.favicon);
+            document.head.appendChild(favicon);
+          }
+          
+          // 处理Apple图标
+          let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+          if (appleIcon) {
+            appleIcon.setAttribute('href', settings.favicon);
+          } else {
+            appleIcon = document.createElement('link');
+            appleIcon.setAttribute('rel', 'apple-touch-icon');
+            appleIcon.setAttribute('href', settings.favicon);
+            document.head.appendChild(appleIcon);
+          }
+          
+          console.log("🔄 已更新网站图标:", settings.favicon);
+        };
 
-        if (existingFavicon) {
-          // 如果存在，更新 href
-          (existingFavicon as HTMLLinkElement).href = settings.favicon
-        } else {
-          // 如果不存在，创建新的
-          const newFavicon = document.createElement("link")
-          newFavicon.setAttribute("rel", "icon")
-          newFavicon.setAttribute("href", settings.favicon)
-          document.head.appendChild(newFavicon)
-        }
-
-        // 更新apple-touch-icon
-        const existingAppleIcon = document.querySelector('link[rel="apple-touch-icon"]')
-        if (existingAppleIcon) {
-          // 如果存在，更新href
-          existingAppleIcon.setAttribute("href", settings.favicon)
-        } else {
-          // 如果不存在，创建新的
-          const newAppleIcon = document.createElement("link")
-          newAppleIcon.setAttribute("rel", "apple-touch-icon")
-          newAppleIcon.setAttribute("href", settings.favicon)
-          document.head.appendChild(newAppleIcon)
-        }
-
-        console.log("已更新网站图标:", settings.favicon)
+        updateFavicon();
       }
     } catch (error) {
-      console.error("更新网站元数据失败:", error)
+      console.error("❌ 更新网站元数据失败:", error);
     }
-  }, [settings])
+  }, [settings]);
 
   // 这个组件不渲染任何内容
   return null

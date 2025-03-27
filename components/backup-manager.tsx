@@ -402,7 +402,7 @@ export default function BackupManager() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">备份管理</h1>
+      <h1 className="text-3xl font-bold">本地备份恢复</h1>
 
       {message && (
         <Alert

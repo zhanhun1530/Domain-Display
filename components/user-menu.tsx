@@ -41,7 +41,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard" className="flex items-center cursor-pointer">
             <LayoutDashboard className="mr-2 h-4 w-4" />
-            <span>控制台管理</span>
+            <span>控制台</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

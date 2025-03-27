@@ -1,262 +1,498 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSite } from "@/contexts/site-context"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useToast } from "@/components/ui/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AlertCircle, Check, Loader2, RotateCcw, Save } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { CheckCircle2, Trash2, Plus, RefreshCw, AlertCircle, Loader2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { RegistrarIcon } from "./registrar-icon"
+import { Card } from "@/components/ui/card"
 
-// 默认设置常量，用于重置
-const DEFAULT_SETTINGS = {
+// 默认设置，用于初始化和重置
+const DEFAULT_SITE_SETTINGS = {
   siteName: "域名展示",
   logoType: "text" as const,
   logoText: "域名展示",
+  logoImage: "",
   favicon: "https://xn--1xa.team/img/favicon.ico",
-  registrarIcons: {
-    aliyun: `<svg t="1742606538431" className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3384" width="24" height="24"><path d="M0 0h1024v1024H0z" fill="#FFFFFF" p-id="3385"></path><path d="M362.752 476.864h298.496v67.328H362.752z" fill="#FF8F00" p-id="3386"></path><path d="M810.816 232.64H613.312l47.68 67.456 144 44.16a62.272 62.272 0 0 1 43.456 59.776V619.968a62.272 62.272 0 0 1-43.52 59.84l-144 44.096-47.616 67.456h197.504A149.184 149.184 0 0 0 960 642.176V381.824a149.184 149.184 0 0 0-149.184-149.12z m-597.632 0h197.504L363.008 300.16l-144 44.16a62.272 62.272 0 0 0-43.456 59.776V619.968a62.272 62.272 0 0 0 43.52 59.84l144 44.096 47.616 67.456H213.184A149.184 149.184 0 0 1 64 642.176V381.824a149.184 149.184 0 0 1 149.184-149.12z" fill="#FF8F00" p-id="3387"></path></svg>`,
-    tencent: `<svg t="1742607317530" className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7697" width="24" height="24"><path d="M465.46176 165.888a349.184 349.184 0 0 0-126.976 46.592l-9.728 5.632a235.52 235.52 0 0 0-20.992 15.36 303.104 303.104 0 0 0-86.528 108.032 344.064 344.064 0 0 0-21.504 60.928c-3.072 10.752-7.168 15.36-13.312 15.36A334.336 334.336 0 0 0 102.45376 451.584a388.096 388.096 0 0 0-51.2 41.984 212.992 212.992 0 0 0-51.2 143.36 208.384 208.384 0 0 0 68.608 157.696 227.84 227.84 0 0 0 96.256 55.808c40.448 10.752 28.672 10.24 345.6 10.24 266.752 0 293.888 0 311.808-3.072a334.848 334.848 0 0 0 57.856-14.848l9.728-4.608a264.704 264.704 0 0 0 47.616-29.184A222.208 222.208 0 0 0 1024.05376 636.416a261.632 261.632 0 0 0-13.312-73.216 27.136 27.136 0 0 1-3.072-8.192 198.656 198.656 0 0 0-19.968-37.376l-9.728-12.288a167.424 167.424 0 0 0-38.4-38.4 173.568 173.568 0 0 0-43.008-28.16l-9.216-4.096a494.08 494.08 0 0 0-51.2-17.408 358.4 358.4 0 0 0-37.888-3.072 216.576 216.576 0 0 0-76.8 7.68l-20.992 7.168a239.104 239.104 0 0 0-51.2 26.112 1382.4 1382.4 0 0 0-108.544 92.672q-95.744 88.576-192.512 176.128l-37.376 34.816-16.896 16.384h-34.304c-18.944 0-42.496 0-51.2-4.096a138.24 138.24 0 0 1-112.128-97.28 185.344 185.344 0 0 1 0-67.072 150.528 150.528 0 0 1 47.616-71.68 168.448 168.448 0 0 1 93.696-33.28 179.712 179.712 0 0 1 114.176 51.2l22.528 18.944 22.528 18.944a59.904 59.904 0 0 0 15.36 11.264c3.584 0 11.776-6.656 40.96-33.28a197.12 197.12 0 0 0 25.088-26.112 109.056 109.056 0 0 0-17.408-19.456l-23.552-19.456c-3.584-4.096-40.448-32.256-59.392-46.08a256 256 0 0 0-64-31.744 70.656 70.656 0 0 1-18.944-8.704 228.864 228.864 0 0 1 17.92-51.2 239.104 239.104 0 0 1 51.2-64 216.064 216.064 0 0 1 83.968-44.032L468.02176 256a173.056 173.056 0 0 1 44.032-4.096A171.52 171.52 0 0 1 563.25376 256a224.256 224.256 0 0 1 96.256 46.08A240.128 240.128 0 0 1 706.61376 358.4a150.016 150.016 0 0 0 10.24 15.36 64.512 64.512 0 0 0 14.848 0 370.688 370.688 0 0 1 45.056-4.096c35.84 0 36.864 0 29.184-15.36a123.904 123.904 0 0 1-6.656-14.848 75.264 75.264 0 0 0-7.168-14.848 81.92 81.92 0 0 1-5.632-9.728 364.544 364.544 0 0 0-40.448-51.2 320 320 0 0 0-90.112-64l-23.04-10.752a310.272 310.272 0 0 0-37.376-11.776 354.816 354.816 0 0 0-130.56-8.192z m350.208 338.944a139.776 139.776 0 0 1 80.896 45.568 115.2 115.2 0 0 1 32.768 84.48 82.944 82.944 0 0 1-4.608 40.448 124.928 124.928 0 0 1-24.064 45.568 147.456 147.456 0 0 1-76.288 47.104 406.528 406.528 0 0 1-41.984 4.608H434.74176a563.2 563.2 0 0 1 48.64-47.104L545.84576 665.6c22.016-20.48 107.008-97.792 119.296-108.032l12.8-11.776a245.76 245.76 0 0 1 43.008-29.184 177.152 177.152 0 0 1 26.112-10.24l17.408-5.12a199.68 199.68 0 0 1 51.2 0z m0 0" fill="#3E4055" p-id="7698"></path></svg>`,
-    godaddy: `<svg t="1742607673992" className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="14038" width="24" height="24"><path d="M683.52 924.16c69.4272-32.9216 165.7856-91.5456 245.76-194.56 20.2752-26.112 37.1712-52.0192 51.2-76.8 12.6976-31.488 27.8016-76.8512 35.84-133.12 18.2784-127.5392-12.3904-222.3104-20.48-245.76-12.9024-37.376-29.8496-80.896-71.68-122.88-65.4336-65.7408-145.2544-78.4896-168.96-81.92-57.9072-8.3968-103.3216 2.1504-138.24 10.24-23.808 5.5296-67.9424 16.128-117.76 46.08-39.5776 23.808-64.512 48.8448-81.92 66.56-48.4864 49.3568-73.2672 95.2832-107.52 158.72-20.2752 37.5808-37.5808 70.0416-51.2 117.76-2.6112 9.1648-9.0112 32.6144-15.36 76.8-5.9904 41.8816-11.8272 101.3248-10.1376 175.104-49.92-82.2272-79.4624-154.112-97.3824-205.824-15.872-45.8752-22.1696-74.8032-25.6-102.4-7.0656-56.9856-13.6704-110.2848 15.36-158.72 38.8096-64.7168 116.1728-79.0528 138.8544-83.2512 95.1808-17.6128 170.0352 29.6448 188.8256 42.2912 27.2896-23.9104 54.6304-47.7696 81.92-71.68-31.8976-24.9344-89.2928-62.208-168.96-76.8-17.152-3.1232-57.6512-9.3184-109.2096-3.8912-39.4752 4.1472-96.9216 9.9328-151.9104 49.9712-11.9296 8.6528-46.0288 35.1744-71.68 81.92-39.1168 71.2704-33.024 142.9504-25.6 230.4 3.7376 44.1856 10.4448 79.8208 15.36 102.4 34.7136 125.6448 86.3744 210.6368 122.88 261.12 29.0304 40.0896 51.2512 62.1568 58.0096 68.7616 27.6992 26.9824 95.0272 90.9824 203.1104 115.5584 31.7952 7.2192 98.4064 21.5552 179.2512-1.4336 27.0848-7.68 99.6864-29.3888 155.8528-96.4608 76.4928-91.392 68.9152-202.8544 64.256-270.6944-4.864-71.4752-24.5248-115.0464-30.72-128-20.7872-43.5712-47.616-73.8816-66.56-92.16-80.2304 32.4096-160.4096 64.8704-240.64 97.28l34.56 86.4768 165.12-71.1168c13.8752 24.0128 34.2016 67.1232 35.84 122.88 2.6624 92.2112-46.3872 203.264-143.36 240.64-50.8416 19.6096-131.584 25.344-179.2-20.48-28.416-27.3408-33.1776-61.696-40.96-117.76-3.8912-28.2112-12.9536-111.104 15.36-215.04 10.2912-37.7344 35.0208-113.3056 92.16-189.44 33.2288-44.288 63.0784-69.632 71.68-76.8 27.5456-22.8864 57.344-47.616 101.0176-61.184 16.9984-5.2736 99.2768-28.5184 178.5344 18.0224 67.3792 39.5264 90.368 104.704 99.328 130.2016 13.6704 38.8096 14.592 70.8608 15.36 97.28 0.768 26.5728 1.9456 85.0432-25.6 153.6-23.8592 59.392-58.5728 99.84-81.92 122.88-40.96 75.0592-81.92 150.1184-122.88 225.2288z" fill="#13EAE4" p-id="14039"></path></svg>`,
-    namecheap: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L2 7 L12 12 L22 7 Z" /><path d="M2 17 L12 22 L22 17" /><path d="M2 12 L12 17 L22 12" /></svg>`,
-    huawei: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#c7000b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></svg>`,
-  },
+  registrarIcons: {}
 }
 
 export default function SiteSettings() {
-  const {
-    settings,
-    updateSiteName,
-    updateLogoType,
-    updateLogoImage,
-    updateLogoText,
-    updateFavicon,
-    addRegistrarIcon,
-    updateRegistrarIcon,
-    removeRegistrarIcon,
-    resetSettings,
-  } = useSite()
+  // 获取站点上下文
+  const { settings, updateSiteName, updateLogoType, updateLogoText, updateLogoImage, updateFavicon, resetSettings } = useSite()
+  const { toast } = useToast()
+  
+  // 状态管理
+  const [isLoading, setIsLoading] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const [activeTab, setActiveTab] = useState("基本设置")
+  const [error, setError] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  
+  // 表单数据状态
+  const [formData, setFormData] = useState({
+    siteName: settings?.siteName || DEFAULT_SITE_SETTINGS.siteName,
+    logoType: settings?.logoType || DEFAULT_SITE_SETTINGS.logoType,
+    logoText: settings?.logoText || DEFAULT_SITE_SETTINGS.logoText,
+    logoImage: settings?.logoImage || DEFAULT_SITE_SETTINGS.logoImage,
+    favicon: settings?.favicon || DEFAULT_SITE_SETTINGS.favicon
+  })
 
-  const [loading, setLoading] = useState(true)
-  const [siteName, setSiteName] = useState("")
-  const [logoType, setLogoType] = useState<"text" | "image">("text")
-  const [logoText, setLogoText] = useState("")
-  const [logoImage, setLogoImage] = useState("")
-  const [favicon, setFavicon] = useState("")
-
-  const [newIconName, setNewIconName] = useState("")
-  const [newIconSvg, setNewIconSvg] = useState("")
-  const [editIconName, setEditIconName] = useState("")
-  const [editIconSvg, setEditIconSvg] = useState("")
-
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [isAddIconDialogOpen, setIsAddIconDialogOpen] = useState(false)
-  const [isEditIconDialogOpen, setIsEditIconDialogOpen] = useState(false)
-
-  // 初始化表单数据
+  // 用于清理成功状态的计时器
   useEffect(() => {
-    try {
-      setSiteName(settings.siteName || DEFAULT_SETTINGS.siteName)
-      setLogoType(settings.logoType || DEFAULT_SETTINGS.logoType)
-      setLogoText(settings.logoText || DEFAULT_SETTINGS.logoText || "")
-      setLogoImage(settings.logoImage || "")
-      setFavicon(settings.favicon || DEFAULT_SETTINGS.favicon)
-      setLoading(false)
-    } catch (error) {
-      console.error("初始化设置表单失败:", error)
-      setMessage({ type: "error", text: "加载设置失败，请刷新页面重试" })
-      setLoading(false)
+    let timer: NodeJS.Timeout
+    if (saveSuccess) {
+      timer = setTimeout(() => {
+        setSaveSuccess(false)
+      }, 3000)
+    }
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [saveSuccess])
+
+  // 当上下文中的设置变更时，同步更新表单
+  useEffect(() => {
+    if (settings) {
+      console.log("检测到设置变更:", settings)
+      setFormData({
+        siteName: settings.siteName || DEFAULT_SITE_SETTINGS.siteName,
+        logoType: settings.logoType || DEFAULT_SITE_SETTINGS.logoType,
+        logoText: settings.logoText || DEFAULT_SITE_SETTINGS.logoText,
+        logoImage: settings.logoImage || DEFAULT_SITE_SETTINGS.logoImage,
+        favicon: settings.favicon || DEFAULT_SITE_SETTINGS.favicon
+      })
     }
   }, [settings])
 
-  // 保存基本设置
-  const handleSaveBasicSettings = () => {
+  // 直接保存到localStorage的辅助函数
+  const saveDirectlyToLocalStorage = useCallback((data: any) => {
     try {
-      console.log("保存基本设置:", { siteName, logoType, logoText, logoImage })
-      updateSiteName(siteName)
-      updateLogoType(logoType)
-
-      if (logoType === "text") {
-        updateLogoText(logoText)
-      } else {
-        updateLogoImage(logoImage)
+      if (typeof window !== 'undefined') {
+        // 获取当前存储的所有设置
+        const currentStoredString = localStorage.getItem("domain-display-site-settings")
+        let currentStored = DEFAULT_SITE_SETTINGS
+        
+        if (currentStoredString) {
+          try {
+            currentStored = JSON.parse(currentStoredString)
+          } catch (e) {
+            console.error("解析已存储设置失败:", e)
+          }
+        }
+        
+        // 合并新数据
+        const merged = { 
+          ...currentStored, 
+          ...data,
+          // 确保registrarIcons不会丢失
+          registrarIcons: (currentStored.registrarIcons || {})
+        }
+        
+        // 强制确保siteName在合并中
+        if (data.siteName) {
+          merged.siteName = data.siteName
+        }
+        
+        // 保存回localStorage
+        localStorage.setItem("domain-display-site-settings", JSON.stringify(merged))
+        console.log("✅ 成功保存到localStorage:", merged)
+        
+        // 额外调试 - 立即重新读取验证
+        const verifyStorage = localStorage.getItem("domain-display-site-settings")
+        if (verifyStorage) {
+          const verifyData = JSON.parse(verifyStorage)
+          console.log("✓ 验证存储结果:", verifyData)
+          // 专门检查siteName
+          if (data.siteName && data.siteName !== verifyData.siteName) {
+            console.error("⚠️ 网站名称保存验证失败:", {
+              expected: data.siteName,
+              actual: verifyData.siteName
+            })
+          }
+        }
+        
+        return true
       }
-
-      setMessage({ type: "success", text: "基本设置已保存，请刷新页面查看效果" })
-      setTimeout(() => setMessage(null), 3000)
-    } catch (error) {
-      console.error("保存基本设置失败:", error)
-      setMessage({ type: "error", text: "保存设置失败，请重试" })
-      setTimeout(() => setMessage(null), 3000)
+      return false
+    } catch (err) {
+      console.error("❌ 直接保存到localStorage失败:", err)
+      return false
     }
-  }
+  }, [])
 
-  // 保存Favicon
-  const handleSaveFavicon = () => {
+  // 处理表单提交
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+    setSaveSuccess(false)
+
     try {
-      console.log("保存Favicon:", favicon)
-      updateFavicon(favicon)
-      setMessage({ type: "success", text: "Favicon已更新，请刷新页面查看效果" })
-      setTimeout(() => setMessage(null), 3000)
+      console.log("提交表单数据:", formData)
+      
+      // 第一步：确保siteName非空
+      const siteName = formData.siteName.trim() || DEFAULT_SITE_SETTINGS.siteName
+      console.log("🔍 处理网站名称:", siteName)
+      
+      // 准备提交数据
+      const dataToSave = {
+        siteName: siteName,
+        logoType: formData.logoType || DEFAULT_SITE_SETTINGS.logoType,
+        logoText: formData.logoType === "text" ? 
+          (formData.logoText || DEFAULT_SITE_SETTINGS.logoText) : settings?.logoText,
+        logoImage: formData.logoType === "image" ? 
+          (formData.logoImage || DEFAULT_SITE_SETTINGS.logoImage) : settings?.logoImage,
+        favicon: formData.favicon || DEFAULT_SITE_SETTINGS.favicon
+      }
+      
+      console.log("📤 准备保存数据:", dataToSave)
+      
+      // 首先直接更新上下文
+      console.log("🔄 更新站点名称到上下文:", siteName)
+      updateSiteName(siteName)
+      
+      // 更新其他设置
+      updateLogoType(dataToSave.logoType as "text" | "image")
+      
+      if (dataToSave.logoType === "text" && dataToSave.logoText) {
+        updateLogoText(dataToSave.logoText)
+      } else if (dataToSave.logoType === "image" && dataToSave.logoImage) {
+        updateLogoImage(dataToSave.logoImage)
+      }
+      
+      updateFavicon(dataToSave.favicon)
+      
+      // 然后直接保存到localStorage
+      console.log("💾 保存数据到localStorage")
+      const savedDirectly = saveDirectlyToLocalStorage(dataToSave)
+      if (!savedDirectly) {
+        throw new Error("无法直接保存到localStorage")
+      }
+      
+      // 强制更新文档标题
+      if (typeof document !== 'undefined') {
+        document.title = siteName
+        console.log("📑 强制更新文档标题:", siteName)
+      }
+      
+      // 设置成功状态
+      setSaveSuccess(true)
+      toast({
+        title: "设置已保存",
+        description: "您的网站设置已成功更新。",
+      })
     } catch (error) {
-      console.error("保存Favicon失败:", error)
-      setMessage({ type: "error", text: "保存Favicon失败，请重试" })
-      setTimeout(() => setMessage(null), 3000)
+      console.error("保存设置失败:", error)
+      setError(error instanceof Error ? error.message : "保存设置时发生未知错误")
+      toast({
+        title: "保存失败",
+        description: "保存设置时发生错误，请重试。",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // 显示加载状态
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">正在加载设置...</p>
-      </div>
-    )
+  // 重置设置
+  const handleReset = () => {
+    setIsResetting(true)
+    setError(null)
+    setSaveSuccess(false)
+    
+    try {
+      console.log("重置设置")
+      
+      // 首先直接保存默认设置到localStorage
+      const savedDirectly = saveDirectlyToLocalStorage({
+        siteName: DEFAULT_SITE_SETTINGS.siteName,
+        logoType: DEFAULT_SITE_SETTINGS.logoType,
+        logoText: DEFAULT_SITE_SETTINGS.logoText,
+        logoImage: DEFAULT_SITE_SETTINGS.logoImage,
+        favicon: DEFAULT_SITE_SETTINGS.favicon
+      })
+      
+      if (!savedDirectly) {
+        throw new Error("无法直接保存默认设置到localStorage")
+      }
+      
+      // 然后重置上下文
+      resetSettings()
+      
+      // 更新表单数据
+      setFormData({
+        siteName: DEFAULT_SITE_SETTINGS.siteName,
+        logoType: DEFAULT_SITE_SETTINGS.logoType,
+        logoText: DEFAULT_SITE_SETTINGS.logoText,
+        logoImage: DEFAULT_SITE_SETTINGS.logoImage,
+        favicon: DEFAULT_SITE_SETTINGS.favicon
+      })
+      
+      // 设置成功状态
+      setSaveSuccess(true)
+      toast({
+        title: "设置已重置",
+        description: "已将所有设置恢复为默认值。",
+      })
+    } catch (error) {
+      console.error("重置设置失败:", error)
+      setError(error instanceof Error ? error.message : "重置设置时发生未知错误")
+      toast({
+        title: "重置失败",
+        description: "重置设置时发生错误，请重试。",
+        variant: "destructive",
+      })
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  // 刷新页面
+  const handleReload = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        // 先强制将当前设置从localStorage加载到sessionStorage
+        // 这样刷新页面时能确保使用最新设置
+        const currentData = localStorage.getItem("domain-display-site-settings")
+        if (currentData) {
+          sessionStorage.setItem("temp_site_settings", currentData)
+          console.log("📦 已将设置临时保存到sessionStorage")
+        }
+        
+        // 添加reload_settings参数强制重新加载设置
+        console.log("🔄 正在刷新页面...")
+        window.location.href = window.location.pathname + '?reload_settings=true&ts=' + new Date().getTime()
+      } catch (error) {
+        console.error("❌ 刷新页面时出错:", error)
+        // 简单刷新
+        window.location.reload()
+      }
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">网站设置</h2>
-        <Button variant="outline" onClick={() => resetSettings()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          重置为默认值
-        </Button>
-      </div>
-
-      {message && (
-        <Alert
-          variant={message.type === "error" ? "destructive" : undefined}
-          className={message.type === "success" ? "bg-green-50 border-green-200" : undefined}
-        >
-          {message.type === "error" ? (
-            <AlertCircle className="h-4 w-4" />
-          ) : (
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          )}
-          <AlertDescription className={message.type === "success" ? "text-green-600" : undefined}>
-            {message.text}
-          </AlertDescription>
+      {/* 错误提示 */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
-      <Tabs defaultValue="basic">
+      
+      {/* 成功提示 */}
+      {saveSuccess && (
+        <Alert variant="default" className="bg-green-50 border-green-200">
+          <Check className="h-4 w-4 text-green-500" />
+          <AlertDescription>设置已成功保存</AlertDescription>
+        </Alert>
+      )}
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="basic">基本设置</TabsTrigger>
-          <TabsTrigger value="favicon">网站图标</TabsTrigger>
+          <TabsTrigger value="基本设置">基本设置</TabsTrigger>
+          <TabsTrigger value="网站图标">网站图标</TabsTrigger>
         </TabsList>
-
-        {/* 基本设置 */}
-        <TabsContent value="basic">
-          <Card>
-            <CardHeader>
-              <CardTitle>基本设置</CardTitle>
-              <CardDescription>设置网站名称和左上角显示</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="site-name">网站名称</Label>
+        
+        <TabsContent value="基本设置" className="mt-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="siteName">网站名称</Label>
                 <Input
-                  id="site-name"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                  placeholder="输入网站名称"
+                  id="siteName"
+                  value={formData.siteName}
+                  onChange={(e) => setFormData({ ...formData, siteName: e.target.value })}
+                  placeholder="请输入网站名称"
+                  className="mt-1"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>左上角显示方式</Label>
-                <RadioGroup value={logoType} onValueChange={(value) => setLogoType(value as "text" | "image")}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="text" id="logo-text" />
-                    <Label htmlFor="logo-text">文字</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="image" id="logo-image" />
-                    <Label htmlFor="logo-image">图片</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {logoType === "text" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="logo-text-input">Logo文字</Label>
-                  <Input
-                    id="logo-text-input"
-                    value={logoText}
-                    onChange={(e) => setLogoText(e.target.value)}
-                    placeholder="输入Logo文字"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label htmlFor="logo-image-input">Logo图片URL</Label>
-                  <Input
-                    id="logo-image-input"
-                    value={logoImage}
-                    onChange={(e) => setLogoImage(e.target.value)}
-                    placeholder="输入Logo图片URL"
-                  />
-                  {logoImage && (
-                    <div className="mt-2 p-2 border rounded">
-                      <p className="text-sm text-muted-foreground mb-2">预览：</p>
-                      <img src={logoImage || "/placeholder.svg"} alt="Logo预览" className="max-h-16" />
+              {/* Logo设置区块 */}
+              <div className="space-y-4 border rounded-md p-4 bg-gray-50/50">
+                <h3 className="text-lg font-medium">左上角Logo设置</h3>
+                
+                <div>
+                  <Label>Logo 显示方式</Label>
+                  <RadioGroup
+                    value={formData.logoType}
+                    onValueChange={(value) => setFormData({ ...formData, logoType: value as "text" | "image" })}
+                    className="flex flex-col space-y-1 mt-1"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="text" id="text" />
+                      <Label htmlFor="text">文字</Label>
                     </div>
-                  )}
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="image" id="image" />
+                      <Label htmlFor="image">图片</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveBasicSettings}>保存基本设置</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
 
-        {/* Favicon设置 */}
-        <TabsContent value="favicon">
-          <Card>
-            <CardHeader>
-              <CardTitle>网站图标</CardTitle>
-              <CardDescription>设置浏览器标签页显示的网站图标</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="favicon-url">Favicon URL</Label>
+                {formData.logoType === "text" ? (
+                  <div>
+                    <Label htmlFor="logoText">Logo 文字</Label>
+                    <Input
+                      id="logoText"
+                      value={formData.logoText}
+                      onChange={(e) => setFormData({ ...formData, logoText: e.target.value })}
+                      placeholder="请输入Logo文字"
+                      className="mt-1"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="logoImage">Logo 图片URL</Label>
+                    <Input
+                      id="logoImage"
+                      value={formData.logoImage}
+                      onChange={(e) => setFormData({ ...formData, logoImage: e.target.value })}
+                      placeholder="请输入Logo图片URL"
+                      className="mt-1"
+                    />
+                    {formData.logoImage && (
+                      <div className="mt-2 flex justify-center p-2 border rounded-md bg-white">
+                        <img 
+                          src={formData.logoImage} 
+                          alt="Logo预览" 
+                          className="max-h-16 object-contain"
+                          onError={(e) => e.currentTarget.style.display = 'none'}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Logo实时预览 */}
+                <div className="mt-4">
+                  <Label>Logo预览(左上角显示效果)</Label>
+                  <div className="mt-2 p-3 border rounded-md bg-white flex items-center">
+                    {formData.logoType === "image" && formData.logoImage ? (
+                      <div className="h-8 w-auto">
+                        <img
+                          src={formData.logoImage}
+                          alt={formData.siteName}
+                          className="h-full w-auto object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<span class="text-red-500 text-xs">图片加载失败</span>';
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="font-bold text-xl">{formData.logoText || formData.siteName}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    保存设置
+                  </>
+                )}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                disabled={isResetting} 
+                onClick={handleReset}
+              >
+                {isResetting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+        
+        <TabsContent value="网站图标" className="mt-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="favicon">网站图标URL</Label>
                 <Input
-                  id="favicon-url"
-                  value={favicon}
-                  onChange={(e) => setFavicon(e.target.value)}
-                  placeholder="输入Favicon URL"
+                  id="favicon"
+                  value={formData.favicon}
+                  onChange={(e) => setFormData({ ...formData, favicon: e.target.value })}
+                  placeholder="请输入网站图标URL（favicon）"
+                  className="mt-1"
                 />
-                {favicon && (
-                  <div className="mt-2 p-2 border rounded">
-                    <p className="text-sm text-muted-foreground mb-2">预览：</p>
-                    <img src={favicon || "/placeholder.svg"} alt="Favicon预览" className="h-8 w-8" />
+                {formData.favicon && (
+                  <div className="mt-2 flex justify-center p-2 border rounded-md">
+                    <img 
+                      src={formData.favicon} 
+                      alt="Favicon预览" 
+                      className="max-h-12 object-contain"
+                      onError={(e) => e.currentTarget.style.display = 'none'}
+                    />
                   </div>
                 )}
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveFavicon}>保存Favicon</Button>
-            </CardFooter>
-          </Card>
+            </div>
+
+            <div className="flex space-x-4">
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    保存设置
+                  </>
+                )}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                disabled={isResetting} 
+                onClick={handleReset}
+              >
+                {isResetting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </form>
         </TabsContent>
       </Tabs>
+      
+      {/* 刷新提示 */}
+      <div className="mt-4 text-center">
+        <Button 
+          variant="outline" 
+          onClick={handleReload}
+          className="text-sm"
+        >
+          刷新页面以查看更改
+        </Button>
+      </div>
     </div>
   )
 }
