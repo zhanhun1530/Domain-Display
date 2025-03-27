@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
-import { initDatabaseAndMigrateData } from "@/lib/db-init";
+import { initDb } from "@/lib/db-init";
 
 /**
  * 初始化数据库并迁移数据
  */
 export async function POST(request: Request) {
   try {
-    const success = await initDatabaseAndMigrateData();
+    const success = await initDb();
     
     if (success) {
       return NextResponse.json({ 
         success: true,
-        message: "数据库初始化和数据迁移成功" 
+        message: "数据库初始化成功" 
       });
     } else {
       return NextResponse.json(
         { 
           success: false,
-          error: "数据库初始化或数据迁移失败" 
+          error: "数据库初始化失败" 
         },
         { status: 500 }
       );

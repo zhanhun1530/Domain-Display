@@ -426,4 +426,261 @@ export function saveAllSettings(settings: Record<string, string>): boolean {
   } finally {
     closeDb(db);
   }
+}
+
+// 注册商数据类型
+export interface Registrar {
+  id?: number;
+  name: string;
+  website?: string;
+  logo?: string;
+  apiKey?: string;
+  description?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+/**
+ * 获取注册商列表
+ */
+export function getRegistrars(): Registrar[] {
+  const db = getDbConnection();
+  
+  try {
+    const rows = db.prepare(`
+      SELECT 
+        id, name, website, logo, api_key as apiKey, description,
+        created_at as createdAt, updated_at as updatedAt
+      FROM registrars
+      ORDER BY name ASC
+    `).all();
+    
+    return rows as Registrar[];
+  } catch (error) {
+    console.error('从数据库获取注册商列表失败:', error);
+    return [];
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 获取单个注册商信息
+ */
+export function getRegistrar(id: number): Registrar | null {
+  const db = getDbConnection();
+  
+  try {
+    const row = db.prepare(`
+      SELECT 
+        id, name, website, logo, api_key as apiKey, description,
+        created_at as createdAt, updated_at as updatedAt
+      FROM registrars
+      WHERE id = ?
+    `).get(id);
+    
+    return row as Registrar || null;
+  } catch (error) {
+    console.error(`从数据库获取注册商(ID: ${id})失败:`, error);
+    return null;
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 通过名称获取注册商信息
+ */
+export function getRegistrarByName(name: string): Registrar | null {
+  const db = getDbConnection();
+  
+  try {
+    const row = db.prepare(`
+      SELECT 
+        id, name, website, logo, api_key as apiKey, description,
+        created_at as createdAt, updated_at as updatedAt
+      FROM registrars
+      WHERE name = ?
+    `).get(name);
+    
+    return row as Registrar || null;
+  } catch (error) {
+    console.error(`从数据库获取注册商(名称: ${name})失败:`, error);
+    return null;
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 保存注册商列表
+ */
+export function saveRegistrars(registrars: Registrar[]): boolean {
+  const db = getDbConnection();
+  
+  try {
+    // 开始事务
+    const transaction = db.transaction(() => {
+      // 清空现有数据
+      db.prepare('DELETE FROM registrars').run();
+      
+      // 批量插入新数据
+      const insert = db.prepare(`
+        INSERT INTO registrars (
+          name, website, logo, api_key, description, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const now = Date.now();
+      
+      for (const registrar of registrars) {
+        insert.run(
+          registrar.name,
+          registrar.website || null,
+          registrar.logo || null,
+          registrar.apiKey || null,
+          registrar.description || null,
+          registrar.createdAt || now,
+          registrar.updatedAt || now
+        );
+      }
+    });
+    
+    // 执行事务
+    transaction();
+    
+    console.log(`✅ 成功保存 ${registrars.length} 个注册商到数据库`);
+    return true;
+  } catch (error) {
+    console.error('保存注册商到数据库失败:', error);
+    return false;
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 添加单个注册商
+ */
+export function addRegistrar(registrar: Registrar): number | null {
+  const db = getDbConnection();
+  
+  try {
+    const now = Date.now();
+    
+    const result = db.prepare(`
+      INSERT INTO registrars (
+        name, website, logo, api_key, description, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      registrar.name,
+      registrar.website || null,
+      registrar.logo || null,
+      registrar.apiKey || null,
+      registrar.description || null,
+      registrar.createdAt || now,
+      registrar.updatedAt || now
+    );
+    
+    console.log(`✅ 成功添加注册商: ${registrar.name}`);
+    return result.lastInsertRowid as number;
+  } catch (error) {
+    console.error(`添加注册商失败: ${registrar.name}`, error);
+    return null;
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 更新单个注册商
+ */
+export function updateRegistrar(id: number, registrar: Partial<Registrar>): boolean {
+  const db = getDbConnection();
+  
+  try {
+    // 构建更新字段
+    const fields: string[] = [];
+    const values: any[] = [];
+    
+    if (registrar.name !== undefined) {
+      fields.push('name = ?');
+      values.push(registrar.name);
+    }
+    
+    if (registrar.website !== undefined) {
+      fields.push('website = ?');
+      values.push(registrar.website);
+    }
+    
+    if (registrar.logo !== undefined) {
+      fields.push('logo = ?');
+      values.push(registrar.logo);
+    }
+    
+    if (registrar.apiKey !== undefined) {
+      fields.push('api_key = ?');
+      values.push(registrar.apiKey);
+    }
+    
+    if (registrar.description !== undefined) {
+      fields.push('description = ?');
+      values.push(registrar.description);
+    }
+    
+    // 添加更新时间
+    fields.push('updated_at = ?');
+    values.push(Date.now());
+    
+    // 添加ID条件
+    values.push(id);
+    
+    // 执行更新
+    const result = db.prepare(`
+      UPDATE registrars
+      SET ${fields.join(', ')}
+      WHERE id = ?
+    `).run(...values);
+    
+    const success = result.changes > 0;
+    
+    if (success) {
+      console.log(`✅ 成功更新注册商(ID: ${id})`);
+    } else {
+      console.log(`⚠️ 未找到要更新的注册商(ID: ${id})`);
+    }
+    
+    return success;
+  } catch (error) {
+    console.error(`更新注册商失败(ID: ${id}):`, error);
+    return false;
+  } finally {
+    closeDb(db);
+  }
+}
+
+/**
+ * 删除注册商
+ */
+export function deleteRegistrar(id: number): boolean {
+  const db = getDbConnection();
+  
+  try {
+    const result = db.prepare('DELETE FROM registrars WHERE id = ?').run(id);
+    
+    const success = result.changes > 0;
+    
+    if (success) {
+      console.log(`✅ 成功删除注册商(ID: ${id})`);
+    } else {
+      console.log(`⚠️ 未找到要删除的注册商(ID: ${id})`);
+    }
+    
+    return success;
+  } catch (error) {
+    console.error(`删除注册商失败(ID: ${id}):`, error);
+    return false;
+  } finally {
+    closeDb(db);
+  }
 } 

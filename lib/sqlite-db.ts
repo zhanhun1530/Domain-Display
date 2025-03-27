@@ -63,6 +63,20 @@ export function initDatabase() {
       );
     `);
     
+    // 创建注册商表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS registrars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        website TEXT,
+        logo TEXT,
+        api_key TEXT,
+        description TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    `);
+    
     // 创建域名表
     db.exec(`
       CREATE TABLE IF NOT EXISTS domains (

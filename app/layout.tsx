@@ -7,6 +7,14 @@ import { SiteProvider } from "@/contexts/site-context"
 import { MainNav } from "@/components/main-nav"
 import { SiteMetadata } from "@/components/site-metadata"
 import { Toaster } from "@/components/ui/toaster"
+import { initDb } from "@/lib/db-init"
+
+// 初始化数据库
+if (typeof process !== 'undefined') {
+  initDb().catch(error => {
+    console.error("数据库初始化失败:", error)
+  })
+}
 
 const inter = Inter({ subsets: ["latin"] })
 
