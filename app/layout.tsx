@@ -9,8 +9,8 @@ import { SiteMetadata } from "@/components/site-metadata"
 import { Toaster } from "@/components/ui/toaster"
 import { initDb } from "@/lib/db-init"
 
-// 初始化数据库
-if (typeof process !== 'undefined') {
+// 初始化数据库（仅服务器端）
+if (typeof window === 'undefined' && typeof process !== 'undefined') {
   initDb().catch(error => {
     console.error("数据库初始化失败:", error)
   })

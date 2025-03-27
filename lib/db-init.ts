@@ -8,6 +8,12 @@ import { initDatabase } from './sqlite-db';
 
 // 初始化数据库
 export async function initDb() {
+  // 确保只在服务器端执行
+  if (typeof window !== 'undefined') {
+    console.log('数据库初始化在客户端环境被跳过');
+    return true;
+  }
+  
   try {
     console.log('🔄 初始化数据库...');
     

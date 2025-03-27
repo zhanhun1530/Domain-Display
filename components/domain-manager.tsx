@@ -276,7 +276,7 @@ export default function DomainManager() {
     // 检查settings.registrarIcons是否是对象类型
     if (typeof settings.registrarIcons === 'object' && settings.registrarIcons !== null) {
       // 返回对象的键数组
-      return Object.keys(settings.registrarIcons || {})
+    return Object.keys(settings.registrarIcons || {})
     }
     return []
   }
@@ -717,7 +717,7 @@ export default function DomainManager() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Dialog>
-                    <DialogTrigger asChild>
+                  <DialogTrigger asChild>
                       <Button size="sm" className="w-full sm:w-auto" onClick={() => {
                         setEditingDomain({
                           id: "",
@@ -728,17 +728,17 @@ export default function DomainManager() {
                         });
                         setIsAddingDomain(true);
                       }}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        添加域名
-                      </Button>
-                    </DialogTrigger>
+                      <Plus className="h-4 w-4 mr-2" />
+                      添加域名
+                    </Button>
+                  </DialogTrigger>
                   </Dialog>
                   <Button onClick={() => setIsImportDialogOpen(true)} variant="outline" size="sm" className="flex-1 sm:flex-grow-0">
                     <Upload className="h-4 w-4 mr-2" />
                     批量导入
                   </Button>
-                </div>
-              </div>
+                        </div>
+                        </div>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row justify-between items-center my-4 gap-2">
@@ -753,7 +753,7 @@ export default function DomainManager() {
                   <Label htmlFor="select-all" className="text-sm cursor-pointer">
                     全选 ({selectedDomains.length}/{domains.length})
                   </Label>
-                </div>
+                        </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
                   <Button
                     variant="outline"
@@ -763,7 +763,7 @@ export default function DomainManager() {
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     批量导入
-                  </Button>
+                      </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -774,7 +774,7 @@ export default function DomainManager() {
                     <Building className="h-4 w-4 mr-2" />
                     批量设置注册商
                   </Button>
-                </div>
+              </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {domains.map((domain) => (
@@ -880,16 +880,16 @@ export default function DomainManager() {
                                             </SelectItem>
                                           ))}
                                           <div className="px-3 py-2 border-t">
-                                            <Input
+                                      <Input
                                               placeholder="输入其他注册商..."
-                                              value={editingDomain?.registrar || ""}
-                                              onChange={(e) => 
-                                                setEditingDomain((prev) => 
+                                        value={editingDomain?.registrar || ""}
+                                        onChange={(e) =>
+                                          setEditingDomain((prev) =>
                                                   prev ? { ...prev, registrar: e.target.value } : null
-                                                )
-                                              }
+                                          )
+                                        }
                                               className="mt-1"
-                                            />
+                                      />
                                           </div>
                                         </SelectContent>
                                       </Select>
@@ -1093,57 +1093,57 @@ export default function DomainManager() {
                       </div>
                     ) : (
                       <div className="grid gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="sold-domain-name">域名</Label>
-                            <Input
-                              id="sold-domain-name"
-                              value={editingSoldDomain?.name || ""}
-                              onChange={(e) =>
-                                setEditingSoldDomain((prev) => (prev ? { ...prev, name: e.target.value } : null))
-                              }
-                              placeholder="example"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="sold-domain-extension">后缀</Label>
-                            <Input
-                              id="sold-domain-extension"
-                              value={editingSoldDomain?.extension || ""}
-                              onChange={(e) =>
-                                setEditingSoldDomain((prev) => (prev ? { ...prev, extension: e.target.value } : null))
-                              }
-                              placeholder=".com"
-                            />
-                          </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="sold-domain-name">域名</Label>
+                          <Input
+                            id="sold-domain-name"
+                            value={editingSoldDomain?.name || ""}
+                            onChange={(e) =>
+                              setEditingSoldDomain((prev) => (prev ? { ...prev, name: e.target.value } : null))
+                            }
+                            placeholder="example"
+                          />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="sold-domain-extension">后缀</Label>
+                          <Input
+                            id="sold-domain-extension"
+                            value={editingSoldDomain?.extension || ""}
+                            onChange={(e) =>
+                              setEditingSoldDomain((prev) => (prev ? { ...prev, extension: e.target.value } : null))
+                            }
+                            placeholder=".com"
+                          />
+                        </div>
+                      </div>
                       </div>
                     )}
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="sold-domain-sold-to">购买方</Label>
-                        <Input
-                          id="sold-domain-sold-to"
-                          value={editingSoldDomain?.soldTo || ""}
-                          onChange={(e) =>
-                            setEditingSoldDomain((prev) => (prev ? { ...prev, soldTo: e.target.value } : null))
-                          }
-                          placeholder="公司名称"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="sold-domain-sold-to">购买方</Label>
+                          <Input
+                            id="sold-domain-sold-to"
+                            value={editingSoldDomain?.soldTo || ""}
+                            onChange={(e) =>
+                              setEditingSoldDomain((prev) => (prev ? { ...prev, soldTo: e.target.value } : null))
+                            }
+                            placeholder="公司名称"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="sold-domain-sold-date">售出日期</Label>
+                          <Input
+                            id="sold-domain-sold-date"
+                            type="date"
+                            value={editingSoldDomain?.soldDate ? formatDate(editingSoldDomain.soldDate) : ""}
+                            onChange={(e) =>
+                              setEditingSoldDomain((prev) => (prev ? { ...prev, soldDate: e.target.value } : null))
+                            }
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="sold-domain-sold-date">售出日期</Label>
-                        <Input
-                          id="sold-domain-sold-date"
-                          type="date"
-                          value={editingSoldDomain?.soldDate ? formatDate(editingSoldDomain.soldDate) : ""}
-                          onChange={(e) =>
-                            setEditingSoldDomain((prev) => (prev ? { ...prev, soldDate: e.target.value } : null))
-                          }
-                        />
-                      </div>
-                    </div>
                     
                     {/* 如果是从待售域名选择，则添加选项以从待售列表中删除 */}
                     {isSelectingExistingDomain && (
@@ -1158,7 +1158,7 @@ export default function DomainManager() {
                         <Label htmlFor="remove-from-available" className="text-sm">
                           自动从待售域名列表中移除
                         </Label>
-                      </div>
+                    </div>
                     )}
                     
                     <DialogFooter>
@@ -1556,7 +1556,7 @@ mysite,org,腾讯云,tencent"
                   }
                   placeholder="example"
                 />
-              </div>
+    </div>
               <div className="space-y-2">
                 <Label htmlFor="domain-extension">后缀</Label>
                 <Input

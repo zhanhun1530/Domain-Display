@@ -2,10 +2,21 @@
  * SQLite数据库工具 - 提供数据库连接和操作
  */
 
-import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
+
+// 动态导入better-sqlite3，只在服务器端运行
+let Database: any = null;
+if (typeof window === 'undefined') {
+  // 服务器端环境
+  try {
+    // @ts-ignore
+    Database = require('better-sqlite3');
+  } catch (error) {
+    console.error('无法加载better-sqlite3模块:', error);
+  }
+}
 
 // 数据库文件路径
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -27,6 +38,12 @@ async function ensureDataDir(): Promise<void> {
  * 获取数据库连接
  */
 export function getDbConnection() {
+  // 客户端环境，返回null
+  if (typeof window !== 'undefined' || !Database) {
+    console.warn('SQLite操作只能在服务器端执行');
+    return null;
+  }
+  
   // 确保数据目录存在
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -50,7 +67,18 @@ export function getDbConnection() {
  * 初始化数据库表结构
  */
 export function initDatabase() {
+  // 客户端环境，不执行任何操作
+  if (typeof window !== 'undefined' || !Database) {
+    console.warn('数据库初始化只能在服务器端执行');
+    return;
+  }
+  
   const db = getDbConnection();
+  
+  if (!db) {
+    console.error('无法获取数据库连接，初始化失败');
+    return;
+  }
   
   try {
     // 创建认证表
@@ -135,15 +163,15 @@ export function initDatabase() {
     throw error;
   } finally {
     // 关闭数据库连接
-    db.close();
+    closeDb(db);
   }
 }
 
 /**
  * 关闭数据库连接
  */
-export function closeDb(db: Database.Database) {
-  if (db) {
+export function closeDb(db: any) {
+  if (db && typeof db.close === 'function') {
     try {
       db.close();
     } catch (error) {
