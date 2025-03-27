@@ -4,11 +4,19 @@ FROM node:20-alpine AS builder
 # 设置工作目录
 WORKDIR /app
 
+# 安装必要的系统依赖
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite-dev
+
 # 复制package.json和package-lock.json
 COPY package*.json ./
 
 # 安装依赖
-RUN npm ci
+RUN npm install
 
 # 复制源代码
 COPY . .
@@ -21,6 +29,11 @@ FROM node:20-alpine AS runner
 
 # 设置工作目录
 WORKDIR /app
+
+# 安装必要的运行时依赖
+RUN apk add --no-cache \
+    sqlite-dev \
+    wget
 
 # 设置环境变量
 ENV NODE_ENV=production
