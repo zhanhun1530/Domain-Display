@@ -25,6 +25,19 @@ const nextConfig = {
     // ESLint错误不阻止构建
     ignoreDuringBuilds: true,
   },
+  // Vercel部署环境检测
+  env: {
+    IS_VERCEL: process.env.VERCEL === '1' ? 'true' : 'false',
+    DATA_STORAGE_TYPE: process.env.VERCEL === '1' ? 'json' : 'sqlite',
+  },
+  // 为Vercel部署做准备
+  webpack: (config, { isServer }) => {
+    // 避免在Vercel中打包native模块
+    if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+      config.externals = [...(config.externals || []), 'better-sqlite3'];
+    }
+    return config;
+  },
 }
 
 mergeConfig(nextConfig, userConfig)

@@ -7,6 +7,10 @@
 import { initDatabase } from './sqlite-db';
 import path from 'path';
 import fs from 'fs';
+import { writeJsonFileSync } from './fs-utils';
+
+// 检查是否在Vercel环境中运行
+const isVercel = process.env.VERCEL === '1' || process.env.IS_VERCEL === 'true';
 
 // 检查数据目录权限
 async function checkDataDir() {
@@ -50,6 +54,55 @@ async function checkDataDir() {
   }
 }
 
+// 在Vercel环境中初始化JSON数据文件
+async function initJsonFiles() {
+  const dataDir = path.join(process.cwd(), "data");
+  
+  // 确保目录存在
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  console.log('🔄 在Vercel环境中初始化JSON数据文件...');
+  
+  try {
+    // 初始化基本的JSON文件（如果不存在）
+    const files = [
+      { 
+        name: 'auth-credentials.json', 
+        default: [{ id: 1, password: 'admin123', last_updated: Date.now(), version: '1.0' }] 
+      },
+      { name: 'domains.json', default: [] },
+      { name: 'sold-domains.json', default: [] },
+      { name: 'registrars.json', default: [] },
+      { name: 'friendly-links.json', default: [] },
+      { 
+        name: 'site-settings.json', 
+        default: [
+          { id: 1, key: 'siteName', value: '我的域名管理系统', updated_at: Date.now() },
+          { id: 2, key: 'siteDescription', value: '一个简单高效的域名管理工具', updated_at: Date.now() }
+        ] 
+      }
+    ];
+    
+    for (const file of files) {
+      const filePath = path.join(dataDir, file.name);
+      
+      // 如果文件不存在，创建默认内容
+      if (!fs.existsSync(filePath)) {
+        console.log(`🔄 创建默认JSON文件: ${file.name}`);
+        writeJsonFileSync(file.name, file.default);
+      }
+    }
+    
+    console.log('✅ JSON数据文件初始化完成');
+    return true;
+  } catch (error) {
+    console.error('❌ 初始化JSON数据文件失败:', error);
+    return false;
+  }
+}
+
 // 初始化数据库
 export async function initDb() {
   // 确保只在服务器端执行
@@ -61,6 +114,13 @@ export async function initDb() {
   try {
     console.log('🔄 初始化数据库...');
     
+    // 在Vercel环境中使用JSON文件
+    if (isVercel) {
+      console.log('⚠️ 在Vercel环境中运行，将使用JSON文件存储');
+      return await initJsonFiles();
+    }
+    
+    // 本地环境使用SQLite
     // 检查better-sqlite3是否可用
     try {
       // @ts-ignore

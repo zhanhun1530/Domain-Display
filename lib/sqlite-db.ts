@@ -6,10 +6,13 @@ import path from 'path';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 
-// 动态导入better-sqlite3，只在服务器端运行
+// 检查是否在Vercel环境中运行
+const isVercel = process.env.VERCEL === '1' || process.env.IS_VERCEL === 'true';
+
+// 动态导入better-sqlite3，只在服务器端运行且不在Vercel环境中
 let Database: any = null;
-if (typeof window === 'undefined') {
-  // 服务器端环境
+if (typeof window === 'undefined' && !isVercel) {
+  // 服务器端环境且不在Vercel中
   try {
     // @ts-ignore
     Database = require('better-sqlite3');
@@ -17,6 +20,8 @@ if (typeof window === 'undefined') {
   } catch (error) {
     console.error('❌ 无法加载better-sqlite3模块(sqlite-db):', error);
   }
+} else if (isVercel) {
+  console.log('⚠️ 在Vercel环境中运行，SQLite模块已禁用');
 }
 
 // 数据库文件路径
@@ -34,6 +39,11 @@ const DB_OPTIONS = {
  * 确保数据目录存在
  */
 async function ensureDataDir(): Promise<void> {
+  // 在Vercel中跳过目录检查
+  if (isVercel) {
+    return;
+  }
+  
   try {
     await fsPromises.access(DATA_DIR);
     console.log(`✅ 数据目录已存在: ${DATA_DIR}`);
@@ -56,9 +66,15 @@ async function ensureDataDir(): Promise<void> {
  * 获取数据库连接
  */
 export function getDbConnection() {
-  // 客户端环境，返回null
+  // 检查环境
   if (typeof window !== 'undefined') {
     console.warn('SQLite操作只能在服务器端执行');
+    return null;
+  }
+  
+  // 在Vercel环境中，不使用SQLite
+  if (isVercel) {
+    console.warn('在Vercel环境中不支持SQLite操作');
     return null;
   }
   
@@ -137,6 +153,12 @@ export function getDbConnection() {
  * 初始化数据库表结构
  */
 export function initDatabase() {
+  // 在Vercel环境中，返回而不执行任何操作
+  if (isVercel) {
+    console.log('⚠️ 在Vercel环境中运行，跳过SQLite数据库初始化');
+    return;
+  }
+  
   // 客户端环境，不执行任何操作
   if (typeof window !== 'undefined') {
     console.warn('数据库初始化只能在服务器端执行');
@@ -269,12 +291,12 @@ export function initDatabase() {
  * 关闭数据库连接
  */
 export function closeDb(db: any) {
-  if (db && typeof db.close === 'function') {
-    try {
-      db.close();
-      console.log('✅ 数据库连接已关闭');
-    } catch (error) {
-      console.error('❌ 关闭数据库连接失败:', error);
-    }
+  if (!db) return;
+  
+  try {
+    db.close();
+    console.log('✅ 数据库连接已关闭');
+  } catch (error) {
+    console.error('关闭数据库连接失败:', error);
   }
 } 
