@@ -9,7 +9,7 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    domains: ['example.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -28,13 +28,19 @@ const nextConfig = {
   // Vercel部署环境检测
   env: {
     IS_VERCEL: process.env.VERCEL === '1' ? '1' : '0',
-    DATA_STORAGE_TYPE: process.env.VERCEL === '1' ? 'json' : 'sqlite',
   },
+  // 输出独立部署文件
+  output: 'standalone',
   // 为Vercel部署做准备
   webpack: (config, { isServer }) => {
-    // 避免在Vercel中打包native模块
-    if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
-      config.externals = [...(config.externals || []), 'better-sqlite3'];
+    // 避免在生产环境中打包原生模块
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
     }
     return config;
   },
