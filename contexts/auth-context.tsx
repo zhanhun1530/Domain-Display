@@ -1,15 +1,29 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import {
+  loadPasswordFromServer,
+  savePasswordToServer,
+  getPasswordFromLocal,
+  verifyPassword,
+  updatePassword as updateServerPassword
+} from "@/lib/password-manager"
 
 // 定义认证上下文类型
 interface AuthContextType {
   isLoggedIn: boolean
   password: string
-  login: (password: string) => boolean
+  isLoading: boolean
+  login: (password: string) => Promise<boolean>
   logout: () => void
-  updatePassword: (newPassword: string) => void
-  resetPassword: () => void
+  updatePassword: (newPassword: string) => Promise<boolean>
+  resetPassword: () => Promise<boolean>
+}
+
+// 定义认证状态类型
+interface AuthState {
+  isLoggedIn: boolean
+  password: string
 }
 
 // 默认密码
@@ -19,10 +33,11 @@ const DEFAULT_PASSWORD = "admin123"
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   password: DEFAULT_PASSWORD,
-  login: () => false,
+  isLoading: false,
+  login: async () => false,
   logout: () => {},
-  updatePassword: () => {},
-  resetPassword: () => {},
+  updatePassword: async () => false,
+  resetPassword: async () => false,
 })
 
 // 本地存储键
@@ -62,57 +77,133 @@ function saveAuthToStorage(auth: { isLoggedIn: boolean; password: string }): voi
 
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // 初始化状态
-  const [auth, setAuth] = useState<{ isLoggedIn: boolean; password: string }>({
-    isLoggedIn: false,
-    password: DEFAULT_PASSWORD,
-  })
+  // 认证状态
+  const [auth, setAuth] = useState<AuthState>({ isLoggedIn: false, password: DEFAULT_PASSWORD })
+  // 添加加载状态
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // 初始化：从本地存储加载认证信息
   useEffect(() => {
-    const storedAuth = getAuthFromStorage()
-    setAuth(storedAuth)
+    const initializeAuth = async () => {
+      setIsLoading(true)
+      try {
+        // 检查localStorage中的登录状态
+        const storedAuthStr = localStorage.getItem(AUTH_STORAGE_KEY)
+        let isLoggedIn = false
+        
+        if (storedAuthStr) {
+          try {
+            const storedAuth = JSON.parse(storedAuthStr)
+            isLoggedIn = storedAuth.isLoggedIn || false
+          } catch (e) {
+            console.error("解析存储的认证数据失败:", e)
+          }
+        }
+        
+        // 从服务器加载密码
+        const serverPassword = await loadPasswordFromServer()
+        
+        // 更新认证状态
+        setAuth({
+          isLoggedIn,
+          password: serverPassword
+        })
+      } catch (error) {
+        console.error("初始化认证失败:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    initializeAuth()
   }, [])
 
   // 登录函数
-  const login = (password: string): boolean => {
-    const currentAuth = getAuthFromStorage()
-
-    if (password === currentAuth.password) {
-      const updatedAuth = { ...currentAuth, isLoggedIn: true }
-      setAuth(updatedAuth)
-      saveAuthToStorage(updatedAuth)
-      return true
+  const login = async (password: string) => {
+    setIsLoading(true)
+    try {
+      // 使用新的验证方法
+      const isValid = await verifyPassword(password)
+      
+      if (isValid) {
+        // 登录成功
+        setAuth({ isLoggedIn: true, password })
+        setIsLoading(false)
+        return true
+      } else {
+        // 密码错误
+        console.error("密码错误")
+        setAuth({ ...auth, isLoggedIn: false })
+        setIsLoading(false)
+        return false
+      }
+    } catch (error) {
+      console.error("登录检查错误:", error)
+      setIsLoading(false)
+      return false
     }
-    return false
   }
 
   // 登出函数
   const logout = (): void => {
     const updatedAuth = { ...auth, isLoggedIn: false }
+    // 只更新登录状态，不更改密码
     setAuth(updatedAuth)
     saveAuthToStorage(updatedAuth)
   }
 
   // 更新密码
-  const updatePassword = (newPassword: string): void => {
-    if (!newPassword.trim()) return
-
-    const updatedAuth = { ...auth, password: newPassword }
-    setAuth(updatedAuth)
-    saveAuthToStorage(updatedAuth)
+  const updatePassword = async (newPassword: string) => {
+    setIsLoading(true)
+    try {
+      // 使用新方法保存密码到服务器
+      const success = await updateServerPassword(newPassword)
+      
+      if (success) {
+        // 更新本地认证状态
+        setAuth({ isLoggedIn: true, password: newPassword })
+        setIsLoading(false)
+        return true
+      } else {
+        console.error("服务器更新密码失败")
+        setIsLoading(false)
+        return false
+      }
+    } catch (error) {
+      console.error("更新密码错误:", error)
+      setIsLoading(false)
+      return false
+    }
   }
 
   // 重置密码
-  const resetPassword = (): void => {
-    const updatedAuth = { ...auth, password: DEFAULT_PASSWORD }
-    setAuth(updatedAuth)
-    saveAuthToStorage(updatedAuth)
+  const resetPassword = async (): Promise<boolean> => {
+    setIsLoading(true)
+    try {
+      // 重置为默认密码
+      const success = await updateServerPassword(DEFAULT_PASSWORD)
+      
+      if (success) {
+        // 更新本地认证状态
+        setAuth({ isLoggedIn: auth.isLoggedIn, password: DEFAULT_PASSWORD })
+        setIsLoading(false)
+        return true
+      } else {
+        console.error("服务器重置密码失败")
+        setIsLoading(false)
+        return false
+      }
+    } catch (error) {
+      console.error("重置密码错误:", error)
+      setIsLoading(false)
+      return false
+    }
   }
 
-  const contextValue = {
+  const contextValue: AuthContextType = {
     isLoggedIn: auth.isLoggedIn,
     password: auth.password,
+    isLoading,
     login,
     logout,
     updatePassword,
