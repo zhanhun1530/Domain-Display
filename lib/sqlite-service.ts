@@ -3,6 +3,7 @@
  */
 
 import { getDbConnection, closeDb } from './sqlite-db';
+// @ts-ignore - 防止TypeScript错误，缺少类型定义
 import type Database from 'better-sqlite3';
 
 // 密码数据类型
@@ -33,40 +34,62 @@ export function getPassword(): PasswordData | null {
  * 保存密码到数据库
  */
 export function savePassword(passwordData: PasswordData): boolean {
-  const db = getDbConnection();
+  if (!passwordData || !passwordData.password) {
+    console.error('❌ SQLite: 无法保存空密码数据');
+    return false;
+  }
+  
+  console.log('🔑 SQLite: 开始保存密码...');
+  let db: Database | null = null;
   
   try {
+    db = getDbConnection();
+    
     // 开始事务
     const transaction = db.transaction(() => {
-      // 检查是否已存在记录
-      const existingRow = db.prepare('SELECT id FROM auth WHERE id = 1').get();
-      
-      if (existingRow) {
-        // 更新现有记录
-        db.prepare(`
-          UPDATE auth 
-          SET password = ?, last_updated = ?, version = ?
-          WHERE id = 1
-        `).run(passwordData.password, passwordData.lastUpdated, passwordData.version);
-      } else {
-        // 插入新记录
-        db.prepare(`
-          INSERT INTO auth (id, password, last_updated, version)
-          VALUES (1, ?, ?, ?)
-        `).run(passwordData.password, passwordData.lastUpdated, passwordData.version);
+      try {
+        // 检查是否已存在记录
+        const existingRow = db.prepare('SELECT id FROM auth WHERE id = 1').get();
+        
+        if (existingRow) {
+          // 更新现有记录
+          console.log('SQLite: 更新现有密码记录');
+          db.prepare(`
+            UPDATE auth 
+            SET password = ?, last_updated = ?, version = ?
+            WHERE id = 1
+          `).run(passwordData.password, passwordData.lastUpdated, passwordData.version);
+        } else {
+          // 插入新记录
+          console.log('SQLite: 创建新密码记录');
+          db.prepare(`
+            INSERT INTO auth (id, password, last_updated, version)
+            VALUES (1, ?, ?, ?)
+          `).run(passwordData.password, passwordData.lastUpdated, passwordData.version);
+        }
+      } catch (error) {
+        console.error('❌ SQLite: 事务内操作失败:', error);
+        throw error; // 重新抛出错误以触发事务回滚
       }
     });
     
     // 执行事务
     transaction();
     
-    console.log('✅ 密码已成功保存到数据库');
+    console.log('✅ SQLite: 密码已成功保存到数据库');
     return true;
   } catch (error) {
-    console.error('保存密码到数据库失败:', error);
+    console.error('❌ SQLite: 保存密码到数据库失败:', error);
     return false;
   } finally {
-    closeDb(db);
+    if (db) {
+      try {
+        closeDb(db);
+        console.log('📝 SQLite: 数据库连接已关闭');
+      } catch (err) {
+        console.error('❌ SQLite: 关闭数据库连接失败:', err);
+      }
+    }
   }
 }
 

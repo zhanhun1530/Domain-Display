@@ -18,38 +18,50 @@ export default function PasswordManager() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [resetting, setResetting] = useState(false)
+  const [updating, setUpdating] = useState(false)
 
   const handleUpdatePassword = useCallback(async () => {
+    // 清除之前的消息
     setMessage(null)
+    setUpdating(true)
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setMessage({ type: "error", text: "请填写所有字段" })
-      return
-    }
+    try {
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        setMessage({ type: "error", text: "请填写所有字段" })
+        return
+      }
 
-    if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "两次输入的新密码不一致" })
-      return
-    }
+      if (newPassword !== confirmPassword) {
+        setMessage({ type: "error", text: "两次输入的新密码不一致" })
+        return
+      }
 
-    // 验证当前密码
-    const isValid = await login(currentPassword)
+      // 验证当前密码
+      console.log("正在验证当前密码...")
+      const isValid = await login(currentPassword)
 
-    if (!isValid) {
-      setMessage({ type: "error", text: "当前密码不正确" })
-      return
-    }
+      if (!isValid) {
+        setMessage({ type: "error", text: "当前密码不正确" })
+        return
+      }
 
-    // 更新密码
-    const success = await updatePassword(newPassword)
-    
-    if (success) {
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-      setMessage({ type: "success", text: "密码已成功更新并持久保存到服务器" })
-    } else {
-      setMessage({ type: "error", text: "密码更新失败，请稍后重试" })
+      // 更新密码
+      console.log("正在更新密码...")
+      const success = await updatePassword(newPassword)
+      
+      if (success) {
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+        setMessage({ type: "success", text: "密码已成功更新并持久保存到服务器" })
+      } else {
+        setMessage({ type: "error", text: "密码更新失败，请稍后重试" })
+      }
+    } catch (error) {
+      console.error("密码更新过程中发生错误:", error)
+      setMessage({ type: "error", text: `更新过程中发生错误: ${error instanceof Error ? error.message : String(error)}` })
+    } finally {
+      setUpdating(false)
     }
   }, [currentPassword, newPassword, confirmPassword, updatePassword, login])
 
@@ -62,6 +74,8 @@ export default function PasswordManager() {
     if (confirm("确定要重置密码为默认值吗？这会将密码重置为: admin123")) {
       setResetting(true)
       try {
+        setMessage(null)
+        console.log("正在重置密码...")
         const success = await resetPassword()
         if (success) {
           setMessage({ type: "success", text: "密码已重置为默认值: admin123，并已保存到服务器" })
@@ -69,8 +83,8 @@ export default function PasswordManager() {
           setMessage({ type: "error", text: "密码重置失败，请稍后重试" })
         }
       } catch (error) {
-        setMessage({ type: "error", text: "重置过程中发生错误" })
         console.error("密码重置错误:", error)
+        setMessage({ type: "error", text: `重置过程中发生错误: ${error instanceof Error ? error.message : String(error)}` })
       } finally {
         setResetting(false)
       }
@@ -108,7 +122,7 @@ export default function PasswordManager() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="输入当前密码"
-              disabled={isLoading}
+              disabled={isLoading || updating || resetting}
             />
           </div>
           <div className="space-y-2">
@@ -119,7 +133,7 @@ export default function PasswordManager() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="输入新密码"
-              disabled={isLoading}
+              disabled={isLoading || updating || resetting}
             />
           </div>
           <div className="space-y-2">
@@ -130,7 +144,7 @@ export default function PasswordManager() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="再次输入新密码"
-              disabled={isLoading}
+              disabled={isLoading || updating || resetting}
             />
           </div>
           
@@ -139,11 +153,11 @@ export default function PasswordManager() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? (
+          <Button type="submit" disabled={isLoading || updating || resetting}>
+            {updating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                处理中...
+                更新中...
               </>
             ) : (
               "更新密码"
@@ -153,14 +167,19 @@ export default function PasswordManager() {
             type="button" 
             variant="outline" 
             onClick={handleResetPassword}
-            disabled={isLoading || resetting}
+            disabled={isLoading || updating || resetting}
           >
             {resetting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                重置中...
+              </>
             ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                重置为默认密码
+              </>
             )}
-            重置为默认密码
           </Button>
         </CardFooter>
       </form>

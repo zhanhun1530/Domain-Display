@@ -161,10 +161,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = async (newPassword: string) => {
     setIsLoading(true)
     try {
+      console.log("开始服务器密码更新...");
+      
+      if (!newPassword) {
+        console.error("新密码无效");
+        setIsLoading(false);
+        return false;
+      }
+      
       // 使用新方法保存密码到服务器
       const success = await updateServerPassword(newPassword)
       
       if (success) {
+        console.log("服务器密码更新成功，更新本地状态");
         // 更新本地认证状态，保持登录状态
         const updatedAuth = { isLoggedIn: true, password: newPassword }
         setAuth(updatedAuth)
@@ -178,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false
       }
     } catch (error) {
-      console.error("更新密码错误:", error)
+      console.error("更新密码过程中发生错误:", error)
       setIsLoading(false)
       return false
     }

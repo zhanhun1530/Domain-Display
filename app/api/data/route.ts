@@ -43,42 +43,56 @@ export async function GET(request: Request) {
  * 写入数据到文件
  */
 export async function POST(request: Request) {
+  console.log("📝 API: 接收到POST数据请求");
+  
   try {
     return await withStorage(async () => {
       // 解析请求体
-      const body = await request.json();
+      const body = await request.json().catch(error => {
+        console.error("❌ API: 解析请求体失败", error);
+        throw new Error("无效的JSON数据");
+      });
+      
       const { filename, data } = body;
       
       if (!filename) {
+        console.error("❌ API: 缺少文件名");
         return NextResponse.json(
-          { error: "缺少文件名" },
+          { error: "缺少文件名", success: false },
           { status: 400 }
         );
       }
       
       if (data === undefined) {
+        console.error("❌ API: 缺少数据");
         return NextResponse.json(
-          { error: "缺少数据" },
+          { error: "缺少数据", success: false },
           { status: 400 }
         );
       }
+      
+      console.log(`📝 API: 正在写入数据到文件: ${filename}`);
       
       // 写入数据
       const success = await writeJsonFile(filename, data);
       
       if (!success) {
+        console.error(`❌ API: 写入文件失败: ${filename}`);
         return NextResponse.json(
-          { error: "写入文件失败" },
+          { error: "写入文件失败", success: false },
           { status: 500 }
         );
       }
       
+      console.log(`✅ API: 成功写入数据到文件: ${filename}`);
       return NextResponse.json({ success: true });
     });
   } catch (error) {
-    console.error("POST请求处理失败:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ API POST请求处理失败:", errorMessage);
+    
     return NextResponse.json(
-      { error: `处理请求时发生错误: ${error instanceof Error ? error.message : String(error)}` },
+      { error: `处理请求时发生错误: ${errorMessage}`, success: false },
       { status: 500 }
     );
   }

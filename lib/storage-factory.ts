@@ -27,14 +27,31 @@ export async function getAuth() {
  * 更新认证信息
  */
 export async function updateAuth(password: string, lastUpdated: number, version?: string) {
-  if (storageType === 'json') {
-    return await jsonStorage.updateAuth(password, lastUpdated, version);
-  } else {
-    return await sqliteService.savePassword({ 
-      password, 
-      lastUpdated, 
-      version: version || '' // 提供默认值，避免undefined
-    });
+  try {
+    console.log(`🔑 存储类型 ${storageType}: 开始更新密码...`);
+    
+    if (!password) {
+      console.error("❌ 密码无效，中止操作");
+      return false;
+    }
+    
+    let success = false;
+    if (storageType === 'json') {
+      success = await jsonStorage.updateAuth(password, lastUpdated, version || ''); // 提供默认值
+      console.log(`📝 JSON存储：密码更新${success ? '成功' : '失败'}`);
+    } else {
+      success = await sqliteService.savePassword({ 
+        password, 
+        lastUpdated, 
+        version: version || '' // 提供默认值，避免undefined
+      });
+      console.log(`💾 SQLite存储：密码更新${success ? '成功' : '失败'}`);
+    }
+    
+    return success;
+  } catch (error) {
+    console.error(`❌ 更新密码过程中发生错误 (${storageType})：`, error);
+    return false;
   }
 }
 

@@ -63,40 +63,78 @@ export async function fetchData<T>(
  * @param filename 文件名
  * @param data 要保存的数据
  * @param updateCache 是否更新缓存
+ * @param maxRetries 最大重试次数
  */
 export async function saveData<T>(
   filename: string, 
   data: T,
-  updateCache: boolean = true
+  updateCache: boolean = true,
+  maxRetries: number = 2
 ): Promise<boolean> {
-  try {
-    console.log(`📤 保存数据到服务器: ${filename}`);
-    const response = await fetch('/api/data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename,
-        data,
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`保存失败: ${response.status} ${response.statusText}`);
+  let retries = 0;
+  
+  while (retries <= maxRetries) {
+    try {
+      console.log(`📤 保存数据到服务器: ${filename}${retries > 0 ? ` (重试: ${retries}/${maxRetries})` : ''}`);
+      
+      if (!filename) {
+        console.error("❌ 保存失败: 文件名不能为空");
+        return false;
+      }
+      
+      if (data === undefined || data === null) {
+        console.error("❌ 保存失败: 数据不能为空");
+        return false;
+      }
+      
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename,
+          data,
+        }),
+        // 增加超时设置
+        signal: AbortSignal.timeout(5000), // 5秒超时
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => `状态码: ${response.status}`);
+        throw new Error(`保存失败: ${response.status} ${response.statusText}, ${errorText}`);
+      }
+      
+      const result = await response.json().catch(() => ({ success: false }));
+      
+      if (!result.success) {
+        throw new Error("响应表明保存失败");
+      }
+      
+      if (updateCache) {
+        // 更新缓存
+        dataCache.set(filename, data);
+        cacheExpireTime.set(filename, Date.now() + CACHE_EXPIRE_TIME);
+      }
+      
+      console.log(`✅ 成功保存数据: ${filename}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ 保存数据失败 (${retries}/${maxRetries}): ${filename}`, error);
+      
+      retries++;
+      if (retries <= maxRetries) {
+        // 指数退避重试
+        const delay = Math.min(1000 * Math.pow(2, retries - 1), 5000);
+        console.log(`⏱️ 等待 ${delay}ms 后重试...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        return false;
+      }
     }
-    
-    if (updateCache) {
-      // 更新缓存
-      dataCache.set(filename, data);
-      cacheExpireTime.set(filename, Date.now() + CACHE_EXPIRE_TIME);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error(`保存数据失败: ${filename}`, error);
-    return false;
   }
+  
+  return false;
 }
 
 /**

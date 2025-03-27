@@ -54,7 +54,13 @@ export async function loadPasswordFromServer(): Promise<string> {
  */
 export async function savePasswordToServer(password: string): Promise<boolean> {
   try {
-    console.log("保存密码到服务器...")
+    console.log("🔐 保存密码到服务器...");
+    
+    // 验证密码
+    if (!password || password.trim() === "") {
+      console.error("❌ 保存失败：密码不能为空");
+      return false;
+    }
     
     // 创建密码数据对象
     const passwordData: PasswordData = {
@@ -63,21 +69,45 @@ export async function savePasswordToServer(password: string): Promise<boolean> {
       version: "1.0"
     }
     
-    // 保存到服务器
-    const success = await saveData(PASSWORD_FILE, passwordData)
+    // 最多重试3次
+    let retries = 3;
+    let success = false;
     
-    if (success) {
-      console.log("✅ 密码已成功保存到服务器")
-      // 同步到localStorage
-      syncPasswordToLocal(password)
-    } else {
-      console.error("❌ 保存密码到服务器失败")
+    while (retries > 0 && !success) {
+      try {
+        // 保存到服务器
+        console.log(`🔄 尝试保存密码 (剩余尝试: ${retries})...`);
+        success = await saveData(PASSWORD_FILE, passwordData);
+        
+        if (success) {
+          console.log("✅ 密码已成功保存到服务器");
+          // 同步到localStorage
+          syncPasswordToLocal(password);
+          return true;
+        } else {
+          console.warn(`⚠️ 尝试 ${4-retries} 失败`);
+          retries--;
+          
+          if (retries > 0) {
+            // 等待一段时间再重试
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      } catch (err) {
+        console.error("❌ 保存过程中发生错误:", err);
+        retries--;
+        
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
     
-    return success
+    console.error("❌ 所有重试均失败，无法保存密码到服务器");
+    return false;
   } catch (error) {
-    console.error("❌ 保存密码到服务器时发生错误:", error)
-    return false
+    console.error("❌ 保存密码到服务器时发生错误:", error);
+    return false;
   }
 }
 
@@ -153,13 +183,45 @@ export async function verifyPassword(inputPassword: string): Promise<boolean> {
  * 更新密码
  */
 export async function updatePassword(newPassword: string): Promise<boolean> {
-  // 保存到服务器
-  const success = await savePasswordToServer(newPassword)
-  
-  if (!success) {
-    // 如果服务器保存失败，至少尝试保存到localStorage
-    syncPasswordToLocal(newPassword)
+  try {
+    console.log("🔄 开始密码更新过程...");
+    
+    // 验证新密码
+    if (!newPassword || newPassword.trim() === "") {
+      console.error("❌ 新密码无效：密码不能为空");
+      return false;
+    }
+    
+    if (newPassword.length < 6) {
+      console.error("❌ 新密码无效：密码长度不应少于6位");
+      return false;
+    }
+    
+    console.log("密码验证通过，开始保存到服务器...");
+    
+    // 保存到服务器
+    const serverSaved = await savePasswordToServer(newPassword);
+    
+    if (!serverSaved) {
+      console.warn("⚠️ 服务器保存失败，尝试保存到本地存储...");
+      // 如果服务器保存失败，至少尝试保存到localStorage
+      syncPasswordToLocal(newPassword);
+      return false;
+    }
+    
+    console.log("✅ 密码更新成功");
+    return true;
+  } catch (error) {
+    console.error("❌ 更新密码过程中发生错误:", error);
+    
+    // 出错时尝试本地保存作为备份
+    try {
+      syncPasswordToLocal(newPassword);
+      console.log("ℹ️ 虽然发生错误，但已保存到本地存储");
+    } catch (e) {
+      console.error("❌ 本地备份也失败:", e);
+    }
+    
+    return false;
   }
-  
-  return success
 } 

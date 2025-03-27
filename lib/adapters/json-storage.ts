@@ -97,32 +97,54 @@ export async function getAuth() {
  * 更新认证信息
  */
 export async function updateAuth(password: string, lastUpdated: number, version?: string) {
-  let authData = await readJsonFile<Auth[]>(AUTH_FILE, []);
-  const now = Date.now();
-  
-  // 检查是否已存在记录
-  const index = authData.findIndex(a => a.id === 1);
-  
-  if (index >= 0) {
-    // 更新现有记录
-    authData[index] = {
-      ...authData[index],
-      password,
-      last_updated: lastUpdated,
-      version,
-    };
-  } else {
-    // 添加新记录
-    authData.push({
-      id: 1,
-      password,
-      last_updated: lastUpdated,
-      version,
-    });
+  try {
+    if (!password) {
+      console.error("JSON存储: 无法更新空密码");
+      return false;
+    }
+    
+    console.log("JSON存储: 读取认证记录...");
+    let authData = await readJsonFile<Auth[]>(AUTH_FILE, []);
+    const now = Date.now();
+    
+    // 检查是否已存在记录
+    const index = authData.findIndex(a => a.id === 1);
+    
+    if (index >= 0) {
+      // 更新现有记录
+      console.log("JSON存储: 更新现有认证记录");
+      authData[index] = {
+        ...authData[index],
+        password,
+        last_updated: lastUpdated,
+        version: version || '',
+      };
+    } else {
+      // 添加新记录
+      console.log("JSON存储: 创建新认证记录");
+      authData.push({
+        id: 1,
+        password,
+        last_updated: lastUpdated,
+        version: version || '',
+      });
+    }
+    
+    // 保存到文件
+    console.log("JSON存储: 保存认证数据到文件");
+    const success = await writeJsonFile(AUTH_FILE, authData);
+    
+    if (success) {
+      console.log("JSON存储: 认证数据保存成功");
+    } else {
+      console.error("JSON存储: 认证数据保存失败");
+    }
+    
+    return success;
+  } catch (error) {
+    console.error("JSON存储: 更新认证数据时发生错误:", error);
+    return false;
   }
-  
-  // 保存到文件
-  return await writeJsonFile(AUTH_FILE, authData);
 }
 
 /**
