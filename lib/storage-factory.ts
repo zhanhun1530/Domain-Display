@@ -7,10 +7,16 @@ import * as jsonStorage from './adapters/json-storage';
 import * as sqliteService from './sqlite-service';
 
 // 确定当前环境
-const isVercel = process.env.VERCEL === '1' || process.env.IS_VERCEL === 'true';
+const isVercel = process.env.VERCEL === '1' || process.env.IS_VERCEL === '1';
 const storageType = isVercel ? 'json' : (process.env.DATA_STORAGE_TYPE || 'sqlite');
 
 console.log(`🔄 存储类型: ${storageType} ${isVercel ? '(Vercel环境)' : ''}`);
+
+// 验证存储类型
+if (storageType !== 'json' && storageType !== 'sqlite') {
+  console.error(`❌ 不支持的存储类型: ${storageType}`);
+  throw new Error(`不支持的存储类型: ${storageType}`);
+}
 
 /**
  * 获取认证信息

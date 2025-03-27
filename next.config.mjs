@@ -27,7 +27,7 @@ const nextConfig = {
   },
   // Vercel部署环境检测
   env: {
-    IS_VERCEL: process.env.VERCEL === '1' ? 'true' : 'false',
+    IS_VERCEL: process.env.VERCEL === '1' ? '1' : '0',
     DATA_STORAGE_TYPE: process.env.VERCEL === '1' ? 'json' : 'sqlite',
   },
   // 为Vercel部署做准备
